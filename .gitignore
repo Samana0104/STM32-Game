@@ -1,0 +1,32 @@
+# Build directories
+/build/
+/mx.scratch/
+
+# Accidental in-source CMake build
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+build.ninja
+.ninja_*
+compile_commands.json
+
+# Firmware outputs
+*.elf
+*.hex
+*.bin
+*.map
+*.o
+*.obj
+*.d
+*.su
+
+# User-specific CMake settings
+CMakeUserPresets.json
+
+# Tool/editor caches
+/.cache/
+.DS_Store
+Thumbs.db
+
+# Keep STM32Cube project metadata
+!.settings/
