@@ -1,0 +1,10 @@
+BasedOnStyle: LLVM
+
+# Put opening braces on the following line (Allman style).
+BreakBeforeBraces: Allman
+
+# Indent with four spaces; do not emit tab characters.
+IndentWidth: 4
+ContinuationIndentWidth: 4
+TabWidth: 4
+UseTab: Never
