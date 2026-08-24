@@ -25,8 +25,8 @@ CMakeUserPresets.json
 
 # Tool/editor caches
 /.cache/
+/.clangd
+/.settings/
+/.vscode/
 .DS_Store
 Thumbs.db
-
-# Keep STM32Cube project metadata
-!.settings/
