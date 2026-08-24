@@ -54,10 +54,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     STM32Game
-    STM32Game/Board/Inc
-    STM32Game/Components/Inc
+    STM32Game/Bsp/Inc
+    STM32Game/Driver/Inc
     STM32Game/App/Inc
-    STM32Game/Utills/Inc
+    STM32Game/Utils/Inc
 )
 
 # Add project symbols (macros)
