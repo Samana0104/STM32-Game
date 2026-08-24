@@ -91,6 +91,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  srand(HAL_GetTick());
   /* USER CODE END 2 */
 
   /* Infinite loop */
