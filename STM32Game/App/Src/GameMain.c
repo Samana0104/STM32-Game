@@ -1,19 +1,21 @@
 #include "GameMain.h"
+#include "GCheat.h"
+
+static void GameInit(void)
+{
+
+}
 
 int GameMain(void)
 {
-    // // Initialize game components
-    // Game_Init();
+    GameInit();
 
-    // // Main game loop
-    // while (1)
-    // {
-    //     // Update game state
-    //     Game_Update();
+    G_LOG(INFO, "Game started successfully. \r\n");
 
-    //     // Render game frame
-    //     Game_Render();
-    // }
+    // Main game loop
+    while (1)
+    {
+    }
 
     return 0; // This line will never be reached
 }
