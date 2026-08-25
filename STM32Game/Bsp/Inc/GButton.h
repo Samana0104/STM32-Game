@@ -37,18 +37,18 @@ void UpdateButtonState(void);
 
 
 /*
- * 특정 버튼의 현재 상태 반환
+ * 특정 버튼 상태 반환
  */
 ButtonState GetButtonState(ButtonId id);
 
 
 /*
- * 특정 버튼이 눌려있는지 확인
+ * 버튼이 눌려있는지 확인
  */
 bool IsButtonPressed(ButtonId id);
 
 
 /*
- * 특정 버튼이 떼져있는지 확인
+ * 버튼이 떼져있는지 확인
  */
 bool IsButtonReleased(ButtonId id);

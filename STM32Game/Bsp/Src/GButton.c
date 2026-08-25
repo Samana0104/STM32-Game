@@ -2,39 +2,29 @@
 
 
 /*
- * 버튼별 GPIO Port
+ * 버튼 정보 구조체
+ */
+typedef struct _ButtonInfo
+{
+    GPIO_TypeDef *port;
+    uint16_t pin;
+    ButtonState state;
+
+} ButtonInfo;
+
+
+/*
+ * 버튼 정보
  *
  * BUTTON_1 -> PA8
  * BUTTON_2 -> PB10
  * BUTTON_3 -> PB4
  */
-static GPIO_TypeDef *buttonPorts[BUTTON_COUNT] =
+static ButtonInfo buttons[BUTTON_COUNT] =
 {
-    GPIOA,
-    GPIOB,
-    GPIOB
-};
-
-
-/*
- * 버튼별 GPIO Pin
- */
-static const uint16_t buttonPins[BUTTON_COUNT] =
-{
-    GPIO_PIN_8,
-    GPIO_PIN_10,
-    GPIO_PIN_4
-};
-
-
-/*
- * 각 버튼의 현재 상태 저장
- */
-static ButtonState buttonStates[BUTTON_COUNT] =
-{
-    BUTTON_RELEASED,
-    BUTTON_RELEASED,
-    BUTTON_RELEASED
+    { GPIOA, GPIO_PIN_8,  BUTTON_RELEASED },
+    { GPIOB, GPIO_PIN_10, BUTTON_RELEASED },
+    { GPIOB, GPIO_PIN_4,  BUTTON_RELEASED }
 };
 
 
@@ -47,37 +37,43 @@ void UpdateButtonState(void)
     {
         GPIO_PinState pinState;
 
-        pinState = HAL_GPIO_ReadPin(buttonPorts[i], buttonPins[i]);
+        pinState = HAL_GPIO_ReadPin(
+            buttons[i].port,
+            buttons[i].pin
+        );
 
         /*
          * Pull-Up 방식
          *
-         * HIGH(SET)   -> 버튼 안 누름
-         * LOW(RESET)  -> 버튼 누름
+         * HIGH(SET)  -> 버튼 안 누름
+         * LOW(RESET) -> 버튼 누름
          */
         if (pinState == GPIO_PIN_RESET)
         {
-            buttonStates[i] = BUTTON_PRESSED;
+            buttons[i].state = BUTTON_PRESSED;
         }
         else
         {
-            buttonStates[i] = BUTTON_RELEASED;
+            buttons[i].state = BUTTON_RELEASED;
         }
     }
 }
 
 
 /*
- * 특정 버튼의 현재 상태 반환
+ * 특정 버튼 상태 반환
  */
 ButtonState GetButtonState(ButtonId id)
 {
-    if (id >= BUTTON_COUNT)
+    /*
+     * 잘못된 버튼 ID 방지
+     */
+    if (id < BUTTON_1 || id >= BUTTON_COUNT)
     {
         return BUTTON_RELEASED;
     }
 
-    return buttonStates[id];
+    return buttons[id].state;
 }
 
 
@@ -86,6 +82,14 @@ ButtonState GetButtonState(ButtonId id)
  */
 bool IsButtonPressed(ButtonId id)
 {
+    /*
+     * 잘못된 버튼 ID 방지
+     */
+    if (id < BUTTON_1 || id >= BUTTON_COUNT)
+    {
+        return false;
+    }
+
     return GetButtonState(id) == BUTTON_PRESSED;
 }
 
@@ -95,5 +99,13 @@ bool IsButtonPressed(ButtonId id)
  */
 bool IsButtonReleased(ButtonId id)
 {
+    /*
+     * 잘못된 버튼 ID 방지
+     */
+    if (id < BUTTON_1 || id >= BUTTON_COUNT)
+    {
+        return false;
+    }
+
     return GetButtonState(id) == BUTTON_RELEASED;
 }
