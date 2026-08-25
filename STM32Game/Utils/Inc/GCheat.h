@@ -15,5 +15,8 @@ typedef enum
 #endif
 
 // USART2에서 입력된 문자열을 파싱하여 명령어를 처리하는 함수
-void ParserCommand(const char * cmd);
+void CheatInit(void);
+void CheatUpdate(void);
+void CheatFrameTick(void);
+void ParseCommand(const char *cmd);
 void CommandLog(LogLevel level, const char *args, ...);

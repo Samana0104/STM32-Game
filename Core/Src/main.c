@@ -94,10 +94,7 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  UartInit();
-  G_LOG(INFO, "System initialized successfully. \r\n");
   GameMain();
-  G_LOG(INFO, "GameMain exited. \r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
