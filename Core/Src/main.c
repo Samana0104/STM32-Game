@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "GCheat.h"
 #include "dma.h"
 #include "usart.h"
 #include "gpio.h"
@@ -27,6 +26,7 @@
 /* USER CODE BEGIN Includes */
 #include "GameMain.h"
 #include "GCheat.h"
+#include "GUsart.h"
 
 /* USER CODE END Includes */
 
@@ -94,6 +94,7 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  UartInit();
   G_LOG(INFO, "System initialized successfully. \r\n");
   GameMain();
   G_LOG(INFO, "GameMain exited. \r\n");
