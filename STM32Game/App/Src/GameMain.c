@@ -29,9 +29,12 @@ int GameMain(void)
         // HAL_Delay(500);
 
 
+
+#ifndef NDEBUG
         CheatUpdate();
         /* 한 프레임의 모든 작업이 끝난 시점에서 프레임 시간을 측정한다. */
         CheatFrameTick();
+#endif
     }
 
     G_LOG(INFO, "GameMain exited. \r\n");
