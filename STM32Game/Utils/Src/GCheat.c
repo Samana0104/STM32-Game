@@ -2,14 +2,9 @@
 #include "GUsart.h"
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_uart.h"
-#include <ctype.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define CHEAT_MAX_ARGS 4U
-#define CHEAT_REPORT_INTERVAL_MS 3000U
+#define CHEAT_REPORT_INTERVAL_MS 1000U
 
 typedef void (*CommandHandler)(int argc, char *argv[]);
 
