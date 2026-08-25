@@ -14,6 +14,15 @@ static void GameInit(void)
 
 }
 
+static void GameUpdate(void)
+{
+#ifndef NDEBUG
+    CheatUpdate();
+    /* 한 프레임의 모든 작업이 끝난 시점에서 프레임 시간을 측정한다. */
+    CheatFrameTick();
+#endif
+}
+
 int GameMain(void)
 {
     GameInit();
@@ -27,14 +36,7 @@ int GameMain(void)
 
         // SetLedState(LED_ID_1, LED_OFF);
         // HAL_Delay(500);
-
-
-
-#ifndef NDEBUG
-        CheatUpdate();
-        /* 한 프레임의 모든 작업이 끝난 시점에서 프레임 시간을 측정한다. */
-        CheatFrameTick();
-#endif
+        GameUpdate();
     }
 
     G_LOG(INFO, "GameMain exited. \r\n");
