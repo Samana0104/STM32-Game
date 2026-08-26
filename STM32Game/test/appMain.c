@@ -1,6 +1,5 @@
 #include "appMain.h"
 
-#include "cmsis_os.h"
 #include "myMole.h"
 
 void appInit(void)

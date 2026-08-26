@@ -1,7 +1,6 @@
 #include "myMole.h"
 
 #include "main.h"
-#include "mySn74hc595.h"
 
 /*
  * 두더지 게임 동작
