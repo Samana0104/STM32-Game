@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 
-#define BUTTON_COUNT 3
+#define BUTTON_COUNT 4
 
 
 /*
@@ -14,7 +14,8 @@ typedef enum
 {
     BUTTON_1 = 0,
     BUTTON_2,
-    BUTTON_3
+    BUTTON_3,
+    BUTTON_START
 
 } ButtonId;
 
@@ -28,6 +29,12 @@ typedef enum
     BUTTON_PRESSED
 
 } ButtonState;
+
+
+/*
+ * 버튼 GPIO 초기화
+ */
+void GButtonInit(void);
 
 
 /*
