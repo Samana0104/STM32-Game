@@ -27,6 +27,7 @@
 static uint8_t cursorColumn;
 static uint8_t cursorRow;
 static uint8_t lcdI2cAddress = LCD_I2C_ADDRESS_MAX;
+static bool lcdReady;
 
 static void I2cDelay(void)
 {
@@ -126,6 +127,8 @@ bool Lcd1602Init(void)
 {
     GPIO_InitTypeDef gpioInit = {0};
 
+    lcdReady = false;
+
     __HAL_RCC_GPIOB_CLK_ENABLE();
     gpioInit.Pin = LCD_SCL_PIN | LCD_SDA_PIN;
     gpioInit.Mode = GPIO_MODE_OUTPUT_OD;
@@ -168,7 +171,13 @@ bool Lcd1602Init(void)
 
     cursorColumn = 0U;
     cursorRow = 0U;
+    lcdReady = true;
     return true;
+}
+
+bool Lcd1602IsReady(void)
+{
+    return lcdReady;
 }
 
 void Lcd1602Clear(void)

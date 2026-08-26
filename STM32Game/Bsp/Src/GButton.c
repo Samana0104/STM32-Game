@@ -178,6 +178,7 @@ bool IsButtonReleased(ButtonId id)
 {
     if (!IsButtonIdValid(id))
     {
+        return false;
     }
 
     return GetButtonState(id) == BUTTON_RELEASED;
@@ -188,10 +189,9 @@ bool IsButtonReleased(ButtonId id)
  */
 bool WasButtonReleased(ButtonId id)
 {
-    if (IsButtonIdValid(id))
+    if (!IsButtonIdValid(id))
     {
         return false;
-        
     }
 
     return buttons[id].releasedEvent;

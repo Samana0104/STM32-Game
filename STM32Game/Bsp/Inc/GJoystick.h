@@ -13,7 +13,7 @@ typedef enum
     JOYSTICK_DOWN
 } JoystickDirection;
 
-/* 조이스틱 GPIO와 ADC1을 초기화한다. */
+/* CubeMX에서 초기화된 ADC1을 기준으로 조이스틱 상태를 초기화한다. */
 void GJoystickInit(void);
 
 /* 두 축의 ADC 값을 읽고 현재 방향과 이동 이벤트를 갱신한다. */

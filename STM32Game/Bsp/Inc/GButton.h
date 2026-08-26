@@ -72,5 +72,3 @@ bool IsButtonReleased(ButtonId id);
  * 직전 업데이트에서 버튼이 떼어졌는지 확인
  */
 bool WasButtonReleased(ButtonId id);
-
-bool IsButtonClicked(ButtonId id);

@@ -29,7 +29,6 @@ static bool GameStateIsValid(GameState state)
 void GameStateInit(GameState initialState)
 {
     currentState = GameStateIsValid(initialState) ? initialState : GAME_STATE_TITLE;
-
     if (stateHandlers[currentState].enter != NULL)
     {
         stateHandlers[currentState].enter();

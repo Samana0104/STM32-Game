@@ -1,18 +1,35 @@
 #include "GameMain.h"
 #include "GameState.h"
-#include "GCheat.h"
-#include "GLed.h"
 #include "GButton.h"
-#include "GUsart.h"
+#include "GCheat.h"
 #include "GFnd.h"
+#include "GJoystick.h"
+#include "GLed.h"
+#include "GUsart.h"
+#include "InGameState.h"
+#include "Lcd1602.h"
+
 #include "stm32f4xx_hal.h"
+
+#define INITIAL_STAGE 1U
 
 static void GameInit(void)
 {
     GledInit();
-    UartInit();
     GButtonInit();
+    GJoystickInit();
+    UartInit();
     FndInit();
+
+    SetFndSingleDigit(INITIAL_STAGE);
+    SetFnd4DigitNumber(0U);
+
+    if (!Lcd1602Init())
+    {
+        G_LOG(ERROR, "LCD initialization failed.\r\n");
+    }
+
+    /* TitleState가 LCD 메뉴 출력과 조이스틱 선택을 담당한다. */
     GameStateInit(GAME_STATE_TITLE);
 
 #ifndef NDEBUG
@@ -20,14 +37,47 @@ static void GameInit(void)
 #endif
 }
 
+static void UpdateResultMenu(void)
+{
+    if (GameStateGet() != GAME_STATE_RESULT || !WasJoystickMoved())
+    {
+        return;
+    }
+
+    if (GetJoystickDirection() == JOYSTICK_UP)
+    {
+        GameStateChange(GAME_STATE_PLAYING);
+        G_LOG(INFO, "Game restarted by joystick UP.\r\n");
+    }
+    else if (GetJoystickDirection() == JOYSTICK_DOWN)
+    {
+        /* EXIT은 펌웨어 종료가 아니라 타이틀 메뉴 복귀로 처리한다. */
+        GameStateChange(GAME_STATE_TITLE);
+    }
+}
+
 static void GameUpdate(void)
 {
     UpdateButtonState();
+    UpdateJoystickState();
+
+    UpdateResultMenu();
     GameStateUpdate();
+
+    if (GameStateGet() == GAME_STATE_PLAYING
+        && InGameStateIsFinished())
+    {
+        GameStateChange(GAME_STATE_RESULT);
+
+        if (Lcd1602IsReady())
+        {
+            /* 점수는 4자리 FND에 유지하고 LCD는 메뉴만 표시한다. */
+            Lcd1602Printf("UP: RESTART\nDOWN: EXIT");
+        }
+    }
 
 #ifndef NDEBUG
     CheatUpdate();
-    /* 한 프레임의 모든 작업이 끝난 시점에서 프레임 시간을 측정한다. */
     CheatFrameTick();
 #endif
 }
@@ -35,24 +85,14 @@ static void GameUpdate(void)
 int GameMain(void)
 {
     GameInit();
-    G_LOG(INFO, "Game started successfully. \r\n");
-
-    // SetFndSingleDigit(3);     /* 1자리 FND에 '3' 표시 */
-    // SetFnd4DigitNumber(2026);  /* 4자리 FND에 '2026' 표시 */
+    G_LOG(INFO, "Game started successfully.\r\n");
 
     while (1)
     {
-        /* 1. 데이터 업데이트 */
         GameUpdate();
-        UpdateButtonState(); // 현재 핀 상태를 한 번만 읽어옵니다.
-
-        // UpdateFnd(); /* 5개 디스플레이를 순환 점등 */
-        // HAL_Delay(1);
-
-        /* 3. 루프 지연 (디바운싱 및 CPU 점유율 조절) */
-        HAL_Delay(10);
+        UpdateFnd();
+        HAL_Delay(1);
     }
 
-    G_LOG(INFO, "GameMain exited. \r\n");
     return 0;
 }

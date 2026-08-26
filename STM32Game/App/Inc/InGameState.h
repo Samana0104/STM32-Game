@@ -14,3 +14,8 @@ void InGameStateExit(void);
 /* 현재 인게임 상태가 활성화되어 있는지 반환한다. */
 bool InGameStateIsActive(void);
 
+/* 제한 시간이 끝났는지 반환한다. */
+bool InGameStateIsFinished(void);
+
+/* 현재 점수를 반환한다. */
+uint32_t InGameStateGetScore(void);

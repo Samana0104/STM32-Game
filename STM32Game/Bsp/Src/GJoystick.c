@@ -1,6 +1,6 @@
 #include "GJoystick.h"
 
-#include "stm32f4xx_hal.h"
+#include "adc.h"
 
 /*
  * NUCLEO-F411RE Arduino analog pin mapping
@@ -8,11 +8,8 @@
  * VRy -> A4 / PC1 / ADC1_IN11
  * 조이스틱 전원은 ADC 허용 전압에 맞춰 3.3 V를 사용한다.
  */
-#define JOYSTICK_GPIO_PORT          GPIOC
-#define JOYSTICK_X_PIN              GPIO_PIN_0
-#define JOYSTICK_Y_PIN              GPIO_PIN_1
-#define JOYSTICK_X_ADC_CHANNEL      10U
-#define JOYSTICK_Y_ADC_CHANNEL      11U
+#define JOYSTICK_X_ADC_CHANNEL      ADC_CHANNEL_10
+#define JOYSTICK_Y_ADC_CHANNEL      ADC_CHANNEL_11
 
 #define JOYSTICK_ADC_MIDPOINT       2048U
 #define JOYSTICK_LOW_THRESHOLD      1200U
@@ -26,28 +23,31 @@ static bool joystickMovedEvent;
 
 static bool ReadAdcChannel(uint32_t channel, uint16_t *value)
 {
-    uint32_t startTick;
+    ADC_ChannelConfTypeDef channelConfig = {0};
 
     if (value == NULL)
     {
         return false;
     }
 
-    ADC1->SQR3 = (ADC1->SQR3 & ~ADC_SQR3_SQ1)
-        | (channel << ADC_SQR3_SQ1_Pos);
-    ADC1->SR = 0U;
-    ADC1->CR2 |= ADC_CR2_SWSTART;
+    channelConfig.Channel = channel;
+    channelConfig.Rank = 1U;
+    channelConfig.SamplingTime = ADC_SAMPLETIME_84CYCLES;
 
-    startTick = HAL_GetTick();
-    while ((ADC1->SR & ADC_SR_EOC) == 0U)
+    if (HAL_ADC_ConfigChannel(&hadc1, &channelConfig) != HAL_OK
+        || HAL_ADC_Start(&hadc1) != HAL_OK)
     {
-        if ((HAL_GetTick() - startTick) >= JOYSTICK_ADC_TIMEOUT_MS)
-        {
-            return false;
-        }
+        return false;
     }
 
-    *value = (uint16_t)ADC1->DR;
+    if (HAL_ADC_PollForConversion(&hadc1, JOYSTICK_ADC_TIMEOUT_MS) != HAL_OK)
+    {
+        HAL_ADC_Stop(&hadc1);
+        return false;
+    }
+
+    *value = (uint16_t)HAL_ADC_GetValue(&hadc1);
+    HAL_ADC_Stop(&hadc1);
     return true;
 }
 
@@ -90,36 +90,8 @@ static JoystickDirection CalculateDirection(uint16_t x, uint16_t y)
 
 void GJoystickInit(void)
 {
-    GPIO_InitTypeDef gpioInit = {0};
     uint16_t initialX;
     uint16_t initialY;
-
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    gpioInit.Pin = JOYSTICK_X_PIN | JOYSTICK_Y_PIN;
-    gpioInit.Mode = GPIO_MODE_ANALOG;
-    gpioInit.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(JOYSTICK_GPIO_PORT, &gpioInit);
-
-    __HAL_RCC_ADC1_CLK_ENABLE();
-
-    /* APB2 84 MHz / 4 = ADC clock 21 MHz, 12-bit single conversion. */
-    ADC->CCR = (ADC->CCR & ~ADC_CCR_ADCPRE) | ADC_CCR_ADCPRE_0;
-    ADC1->CR1 = 0U;
-    ADC1->CR2 = 0U;
-    ADC1->SQR1 = 0U;
-    ADC1->SQR2 = 0U;
-    ADC1->SQR3 = 0U;
-    ADC1->SMPR1 = (ADC1->SMPR1
-        & ~(ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11))
-        | ADC_SMPR1_SMP10_2
-        | ADC_SMPR1_SMP11_2;
-    ADC1->CR2 = ADC_CR2_ADON;
-
-    /* ADC 전원 안정화 시간을 확보한다. */
-    for (volatile uint32_t i = 0U; i < 100U; i++)
-    {
-        __NOP();
-    }
 
     joystickX = JOYSTICK_ADC_MIDPOINT;
     joystickY = JOYSTICK_ADC_MIDPOINT;

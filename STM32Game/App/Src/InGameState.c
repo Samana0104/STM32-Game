@@ -1,67 +1,113 @@
 #include "InGameState.h"
 #include "GButton.h"
-#include "GLed.h"
 #include "GCheat.h"
-#include <stdlib.h>
+#include "GFnd.h"
+#include "GLed.h"
+#include "Lcd1602.h"
 
-#define MOLE_VISIBLE_TIME_MS 800U
+#define GAME_STAGE             1U
+#define MOLE_COUNT             ((uint8_t)LED_MAX)
+#define GAME_DURATION_MS       30000U
+#define MOLE_VISIBLE_MS        800U
+#define NO_ACTIVE_MOLE         MOLE_COUNT
 
 static bool isActive;
-static uint32_t score;
+static bool isFinished;
+static uint8_t currentMole = NO_ACTIVE_MOLE;
+static uint32_t startTick;
 static uint32_t moleStartTick;
-static LedId activeMole;
+static uint32_t score;
+static uint32_t randomState;
 
-static void SpawnMole(uint32_t now)
+static void TurnOffCurrentMole(void)
 {
-    activeMole = (LedId)(rand() % LED_MAX);
-    moleStartTick = now;
-    SetLedState(activeMole, LED_ON);
+    if (currentMole < MOLE_COUNT)
+    {
+        SetLedState((LedId)currentMole, LED_OFF);
+        currentMole = NO_ACTIVE_MOLE;
+    }
 }
 
-static void HideMole(void)
+static uint32_t NextRandom(void)
 {
-    if (activeMole < LED_MAX)
+    randomState = (randomState * 1664525U) + 1013904223U;
+    return randomState;
+}
+
+static void SpawnMole(uint32_t currentTick)
+{
+    uint8_t previousMole = currentMole;
+    uint8_t nextMole;
+
+    TurnOffCurrentMole();
+    nextMole = (uint8_t)(NextRandom() % MOLE_COUNT);
+
+    if (nextMole == previousMole)
     {
-        SetLedState(activeMole, LED_OFF);
-        activeMole = LED_MAX;
+        nextMole = (uint8_t)((nextMole + 1U) % MOLE_COUNT);
     }
+
+    currentMole = nextMole;
+    moleStartTick = currentTick;
+    SetLedState((LedId)currentMole, LED_ON);
+}
+
+static bool IsGameTimeOver(uint32_t currentTick)
+{
+    return (currentTick - startTick) >= GAME_DURATION_MS;
 }
 
 void InGameStateEnter(void)
 {
-    isActive = true;
+    startTick = HAL_GetTick();
+    moleStartTick = startTick;
     score = 0U;
-    moleStartTick = HAL_GetTick();
-    srand((unsigned int)moleStartTick);
-    activeMole = LED_MAX;
-    SpawnMole(moleStartTick);
-    G_LOG(INFO, "InGameState entered. \r\n");
+    randomState = startTick ^ 0xA5A5A5A5U;
+    currentMole = NO_ACTIVE_MOLE;
+    isFinished = false;
+    isActive = true;
+
+    SetFndSingleDigit(GAME_STAGE);
+    SetFnd4DigitNumber(0U);
+
+    if (Lcd1602IsReady())
+    {
+        /* LCD는 게임 로직 없이 현재 화면의 문자열만 출력한다. */
+        Lcd1602Printf("GAME START\nCatch the mole!");
+    }
+
+    SpawnMole(startTick);
+    G_LOG(INFO, "InGameState entered.\r\n");
 }
 
 void InGameStateUpdate(void)
 {
+    uint32_t currentTick;
+
     if (!isActive)
     {
         return;
     }
 
-    const uint32_t now = HAL_GetTick();
+    currentTick = HAL_GetTick();
 
-    if ((activeMole < LED_MAX) &&
-        WasButtonPressed((ButtonId)activeMole))
+    if (IsGameTimeOver(currentTick))
     {
-        ++score;
-        HideMole();
-    }
-    else if ((activeMole < LED_MAX) &&
-             ((now - moleStartTick) >= MOLE_VISIBLE_TIME_MS))
-    {
-        HideMole();
+        TurnOffCurrentMole();
+        isFinished = true;
+        return;
     }
 
-    if (activeMole == LED_MAX)
+    if (currentMole < MOLE_COUNT
+        && WasButtonPressed((ButtonId)currentMole))
     {
-        SpawnMole(now);
+        score++;
+        SetFnd4DigitNumber((uint16_t)score);
+        SpawnMole(currentTick);
+    }
+    else if ((currentTick - moleStartTick) >= MOLE_VISIBLE_MS)
+    {
+        SpawnMole(currentTick);
     }
 }
 
@@ -72,12 +118,22 @@ void InGameStateExit(void)
         return;
     }
 
-    HideMole();
+    TurnOffCurrentMole();
     isActive = false;
-    G_LOG(INFO, "InGameState exited. \r\n");
+    G_LOG(INFO, "InGameState exited.\r\n");
 }
 
 bool InGameStateIsActive(void)
 {
     return isActive;
+}
+
+bool InGameStateIsFinished(void)
+{
+    return isFinished;
+}
+
+uint32_t InGameStateGetScore(void)
+{
+    return score;
 }
