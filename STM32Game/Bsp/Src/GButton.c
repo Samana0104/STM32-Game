@@ -1,6 +1,9 @@
 #include "GButton.h"
 
 
+#define BUTTON_DEBOUNCE_MS 20U
+
+
 /*
  * 버튼 정보 구조체
  */
@@ -9,6 +12,10 @@ typedef struct _ButtonInfo
     GPIO_TypeDef *port;
     uint16_t pin;
     ButtonState state;
+    ButtonState rawState;
+    uint32_t rawStateChangedTick;
+    bool pressedEvent;
+    bool releasedEvent;
 
 } ButtonInfo;
 
@@ -16,18 +23,43 @@ typedef struct _ButtonInfo
 /*
  * 버튼 정보
  *
- * BUTTON_1 -> PA8
- * BUTTON_2 -> PB10
- * BUTTON_3 -> PB4
- * BUTTON_START -> PB5
+ * NUCLEO-F411RE Arduino D8부터 D2까지 순서대로 사용한다.
+ *
+ * BUTTON_1 -> PA9  (D8)
+ * BUTTON_2 -> PA8  (D7)
+ * BUTTON_3 -> PB10 (D6)
+ * BUTTON_4 -> PB4  (D5)
+ * BUTTON_5 -> PB5  (D4)
+ * BUTTON_6 -> PB3  (D3, SWO 기능 미사용)
+ * BUTTON_7 -> PA10 (D2)
  */
 static ButtonInfo buttons[BUTTON_COUNT] =
 {
-    { GPIOA, GPIO_PIN_8,  BUTTON_RELEASED },
-    { GPIOB, GPIO_PIN_10, BUTTON_RELEASED },
-    { GPIOB, GPIO_PIN_4,  BUTTON_RELEASED },
-    { GPIOB, GPIO_PIN_5,  BUTTON_RELEASED }
+    { GPIOA, GPIO_PIN_9,  BUTTON_RELEASED, BUTTON_RELEASED, 0U, false, false },
+    { GPIOA, GPIO_PIN_8,  BUTTON_RELEASED, BUTTON_RELEASED, 0U, false, false },
+    { GPIOB, GPIO_PIN_10, BUTTON_RELEASED, BUTTON_RELEASED, 0U, false, false },
+    { GPIOB, GPIO_PIN_4,  BUTTON_RELEASED, BUTTON_RELEASED, 0U, false, false },
+    { GPIOB, GPIO_PIN_5,  BUTTON_RELEASED, BUTTON_RELEASED, 0U, false, false },
+    { GPIOB, GPIO_PIN_3,  BUTTON_RELEASED, BUTTON_RELEASED, 0U, false, false },
+    { GPIOA, GPIO_PIN_10, BUTTON_RELEASED, BUTTON_RELEASED, 0U, false, false }
 };
+
+
+static bool IsButtonIdValid(ButtonId id)
+{
+    return id >= BUTTON_1 && id < BUTTON_COUNT;
+}
+
+
+static ButtonState ReadButtonState(const ButtonInfo *button)
+{
+    GPIO_PinState pinState = HAL_GPIO_ReadPin(button->port, button->pin);
+
+    /* Pull-up 방식이므로 LOW일 때 눌림 상태이다. */
+    return pinState == GPIO_PIN_RESET
+        ? BUTTON_PRESSED
+        : BUTTON_RELEASED;
+}
 
 
 /*
@@ -37,6 +69,7 @@ static ButtonInfo buttons[BUTTON_COUNT] =
 void GButtonInit(void)
 {
     GPIO_InitTypeDef gpioInit = {0};
+    uint32_t currentTick;
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -44,13 +77,23 @@ void GButtonInit(void)
     gpioInit.Mode = GPIO_MODE_INPUT;
     gpioInit.Pull = GPIO_PULLUP;
 
-    gpioInit.Pin = GPIO_PIN_8;
+    gpioInit.Pin = GPIO_PIN_9 | GPIO_PIN_8 | GPIO_PIN_10;
     HAL_GPIO_Init(GPIOA, &gpioInit);
 
-    gpioInit.Pin = GPIO_PIN_10 | GPIO_PIN_4 | GPIO_PIN_5;
+    gpioInit.Pin = GPIO_PIN_10 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_3;
     HAL_GPIO_Init(GPIOB, &gpioInit);
 
-    UpdateButtonState();
+    currentTick = HAL_GetTick();
+    for (int i = 0; i < BUTTON_COUNT; i++)
+    {
+        ButtonState initialState = ReadButtonState(&buttons[i]);
+
+        buttons[i].state = initialState;
+        buttons[i].rawState = initialState;
+        buttons[i].rawStateChangedTick = currentTick;
+        buttons[i].pressedEvent = false;
+        buttons[i].releasedEvent = false;
+    }
 }
 
 
@@ -59,28 +102,28 @@ void GButtonInit(void)
  */
 void UpdateButtonState(void)
 {
+    uint32_t currentTick = HAL_GetTick();
+
     for (int i = 0; i < BUTTON_COUNT; i++)
     {
-        GPIO_PinState pinState;
+        ButtonState sampledState = ReadButtonState(&buttons[i]);
 
-        pinState = HAL_GPIO_ReadPin(
-            buttons[i].port,
-            buttons[i].pin
-        );
+        /* 이벤트는 UpdateButtonState() 호출 한 번 동안만 유지한다. */
+        buttons[i].pressedEvent = false;
+        buttons[i].releasedEvent = false;
 
-        /*
-         * Pull-Up 방식
-         *
-         * HIGH(SET)  -> 버튼 안 누름
-         * LOW(RESET) -> 버튼 누름
-         */
-        if (pinState == GPIO_PIN_RESET)
+        if (sampledState != buttons[i].rawState)
         {
-            buttons[i].state = BUTTON_PRESSED;
+            buttons[i].rawState = sampledState;
+            buttons[i].rawStateChangedTick = currentTick;
         }
-        else
+        else if (sampledState != buttons[i].state
+            && (currentTick - buttons[i].rawStateChangedTick)
+                >= BUTTON_DEBOUNCE_MS)
         {
-            buttons[i].state = BUTTON_RELEASED;
+            buttons[i].state = sampledState;
+            buttons[i].pressedEvent = sampledState == BUTTON_PRESSED;
+            buttons[i].releasedEvent = sampledState == BUTTON_RELEASED;
         }
     }
 }
@@ -91,10 +134,7 @@ void UpdateButtonState(void)
  */
 ButtonState GetButtonState(ButtonId id)
 {
-    /*
-     * 잘못된 버튼 ID 방지
-     */
-    if (id < BUTTON_1 || id >= BUTTON_COUNT)
+    if (!IsButtonIdValid(id))
     {
         return BUTTON_RELEASED;
     }
@@ -108,10 +148,7 @@ ButtonState GetButtonState(ButtonId id)
  */
 bool IsButtonPressed(ButtonId id)
 {
-    /*
-     * 잘못된 버튼 ID 방지
-     */
-    if (id < BUTTON_1 || id >= BUTTON_COUNT)
+    if (!IsButtonIdValid(id))
     {
         return false;
     }
@@ -121,17 +158,42 @@ bool IsButtonPressed(ButtonId id)
 
 
 /*
+ * 디바운싱이 끝난 뒤 버튼이 눌린 첫 업데이트에서만 true를 반환한다.
+ */
+bool WasButtonPressed(ButtonId id)
+{
+    if (!IsButtonIdValid(id))
+    {
+        return false;
+    }
+
+    return buttons[id].pressedEvent;
+}
+
+
+/*
  * 버튼이 떼져있는지 확인
  */
 bool IsButtonReleased(ButtonId id)
 {
-    /*
-     * 잘못된 버튼 ID 방지
-     */
-    if (id < BUTTON_1 || id >= BUTTON_COUNT)
+    if (!IsButtonIdValid(id))
     {
         return false;
     }
 
     return GetButtonState(id) == BUTTON_RELEASED;
+}
+
+
+/*
+ * 디바운싱이 끝난 뒤 버튼이 떼어진 첫 업데이트에서만 true를 반환한다.
+ */
+bool WasButtonReleased(ButtonId id)
+{
+    if (!IsButtonIdValid(id))
+    {
+        return false;
+    }
+
+    return buttons[id].releasedEvent;
 }

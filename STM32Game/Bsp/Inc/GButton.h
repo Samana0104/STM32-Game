@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 
-#define BUTTON_COUNT 4
+#define BUTTON_COUNT 7
 
 
 /*
@@ -15,7 +15,10 @@ typedef enum
     BUTTON_1 = 0,
     BUTTON_2,
     BUTTON_3,
-    BUTTON_START
+    BUTTON_4,
+    BUTTON_5,
+    BUTTON_6,
+    BUTTON_7
 
 } ButtonId;
 
@@ -56,6 +59,18 @@ bool IsButtonPressed(ButtonId id);
 
 
 /*
+ * 직전 업데이트에서 버튼이 눌리기 시작했는지 확인
+ */
+bool WasButtonPressed(ButtonId id);
+
+
+/*
  * 버튼이 떼져있는지 확인
  */
 bool IsButtonReleased(ButtonId id);
+
+
+/*
+ * 직전 업데이트에서 버튼이 떼어졌는지 확인
+ */
+bool WasButtonReleased(ButtonId id);
