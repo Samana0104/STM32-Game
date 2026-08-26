@@ -1,12 +1,19 @@
-#ifndef FND1_H
-#define FND1_H
+#ifndef GFND_H
+#define GFND_H
 
 #include "main.h"
 #include "stm32f4xx_hal.h"
 #include <stdint.h>
+#include <stdbool.h>
 
-void FND1_Init(void);
-void FND1_DisplayDigit(uint8_t digit, uint8_t showDot);
-void FND1_Clear(void);
+#define FND_4DIGIT_COUNT 4
+#define FND_TOTAL_DIGITS 5
+#define FND_MAX_4DIGIT   9999
+
+void FndInit(void);
+void SetFndSingleDigit(uint8_t digit);
+void SetFnd4DigitNumber(uint16_t number);
+void UpdateFnd(void);
+void ClearFnd(void);
 
 #endif

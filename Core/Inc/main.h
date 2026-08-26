@@ -65,20 +65,52 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define JOYSTICK_VRX_Pin GPIO_PIN_0
+#define JOYSTICK_VRX_GPIO_Port GPIOC
+#define JOYSTICK_VRY_Pin GPIO_PIN_1
+#define JOYSTICK_VRY_GPIO_Port GPIOC
+#define FND_DIG_1_Pin GPIO_PIN_2
+#define FND_DIG_1_GPIO_Port GPIOC
+#define FND_DIG_2_Pin GPIO_PIN_3
+#define FND_DIG_2_GPIO_Port GPIOC
 #define LED_DATA_Pin GPIO_PIN_0
 #define LED_DATA_GPIO_Port GPIOA
+#define LED_LATCH_Pin GPIO_PIN_1
+#define LED_LATCH_GPIO_Port GPIOA
 #define USART_TX_Pin GPIO_PIN_2
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3
 #define USART_RX_GPIO_Port GPIOA
-#define LED_LATCH_Pin GPIO_PIN_4
-#define LED_LATCH_GPIO_Port GPIOA
-#define LED_CLOCK_Pin GPIO_PIN_0
-#define LED_CLOCK_GPIO_Port GPIOB
+#define LED_CLOCK_Pin GPIO_PIN_4
+#define LED_CLOCK_GPIO_Port GPIOA
+#define ONBOARD_LD2_Pin GPIO_PIN_5
+#define ONBOARD_LD2_GPIO_Port GPIOA
+#define FND_SEG_B_Pin GPIO_PIN_6
+#define FND_SEG_B_GPIO_Port GPIOA
+#define FND_SEG_C_Pin GPIO_PIN_7
+#define FND_SEG_C_GPIO_Port GPIOA
+#define FND_DIG_3_Pin GPIO_PIN_4
+#define FND_DIG_3_GPIO_Port GPIOC
+#define FND_DIG_4_Pin GPIO_PIN_5
+#define FND_DIG_4_GPIO_Port GPIOC
+#define FND_SEG_A_Pin GPIO_PIN_0
+#define FND_SEG_A_GPIO_Port GPIOB
+#define FND_SEG_D_Pin GPIO_PIN_1
+#define FND_SEG_D_GPIO_Port GPIOB
+#define FND_SEG_E_Pin GPIO_PIN_2
+#define FND_SEG_E_GPIO_Port GPIOB
+#define FND_SEG_DP_Pin GPIO_PIN_12
+#define FND_SEG_DP_GPIO_Port GPIOB
+#define FND_DIG_COM_Pin GPIO_PIN_6
+#define FND_DIG_COM_GPIO_Port GPIOC
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
+#define FND_SEG_F_Pin GPIO_PIN_6
+#define FND_SEG_F_GPIO_Port GPIOB
+#define FND_SEG_G_Pin GPIO_PIN_7
+#define FND_SEG_G_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
