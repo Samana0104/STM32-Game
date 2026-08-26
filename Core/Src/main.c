@@ -95,17 +95,7 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  while(1)
-  {
-    // 매 루프마다 최신 버튼 상태를 갱신해야 합니다.
-    UpdateButtonState();
-
-    // IsButtonPressed 대신 IsButtonClicked 사용
-    if (IsButtonClicked(BUTTON_START))
-    {
-        GameMain();
-    }
-  }
+  GameMain();
   /* USER CODE END 2 */
 
   /* Infinite loop */
