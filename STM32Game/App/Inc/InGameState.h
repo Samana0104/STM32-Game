@@ -1,8 +1,6 @@
 #pragma once
 
 #include "main.h"
-#include <stdbool.h>
-#include <stdint.h>
 
 /* 인게임 상태에 진입할 때 한 번 호출한다. */
 void InGameStateEnter(void);
@@ -15,7 +13,4 @@ void InGameStateExit(void);
 
 /* 현재 인게임 상태가 활성화되어 있는지 반환한다. */
 bool InGameStateIsActive(void);
-
-/* 인게임 상태 진입 후 지난 시간을 ms 단위로 반환한다. */
-uint32_t InGameStateGetElapsedMs(void);
 

@@ -1,14 +1,16 @@
 #include "InGameState.h"
+#include "GButton.h"
+#include "GLed.h"
+#include "GCheat.h"
 
 static bool isActive;
-static uint32_t startTick;
 
 void InGameStateEnter(void)
 {
-    startTick = HAL_GetTick();
     isActive = true;
 
     /* TODO: 점수, 타이머, 두더지 상태를 초기화한다. */
+    G_LOG(INFO, "InGameState entered. \r\n");
 }
 
 void InGameStateUpdate(void)
@@ -18,7 +20,14 @@ void InGameStateUpdate(void)
         return;
     }
 
-    /* TODO: 두더지 생성, 버튼 판정, 점수 및 제한 시간을 갱신한다. */
+    SetLedState(LED_ID_1,
+                IsButtonPressed(BUTTON_1) ? LED_ON : LED_OFF);
+    SetLedState(LED_ID_2,
+                IsButtonPressed(BUTTON_2) ? LED_ON : LED_OFF);
+    SetLedState(LED_ID_3,
+                IsButtonPressed(BUTTON_3) ? LED_ON : LED_OFF);
+
+    /* TODO: 두더지 생성, 점수 및 제한 시간을 갱신한다. */
 }
 
 void InGameStateExit(void)
@@ -30,19 +39,10 @@ void InGameStateExit(void)
 
     /* TODO: 활성화된 LED와 인게임 자원을 정리한다. */
     isActive = false;
+    G_LOG(INFO, "InGameState exited. \r\n");
 }
 
 bool InGameStateIsActive(void)
 {
     return isActive;
-}
-
-uint32_t InGameStateGetElapsedMs(void)
-{
-    if (!isActive)
-    {
-        return 0U;
-    }
-
-    return HAL_GetTick() - startTick;
 }

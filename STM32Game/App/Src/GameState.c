@@ -1,11 +1,26 @@
 #include "GameState.h"
 #include "InGameState.h"
 
-typedef void (*GameStateUpdateFunction)(void);
+typedef void (*GameStateFunction)(void);
+
+typedef struct
+{
+    GameStateFunction enter;
+    GameStateFunction update;
+    GameStateFunction exit;
+} GameStateHandler;
+
+static const GameStateHandler stateHandlers[GAME_STATE_COUNT] =
+{
+    [GAME_STATE_TITLE]   = { NULL, NULL,              NULL },
+    [GAME_STATE_READY]   = { NULL, NULL,              NULL },
+    [GAME_STATE_PLAYING] = { InGameStateEnter,
+                             InGameStateUpdate,
+                             InGameStateExit },
+    [GAME_STATE_RESULT]  = { NULL, NULL,              NULL }
+};
 
 static GameState currentState = GAME_STATE_TITLE;
-static uint32_t stateStartTick;
-static GameStateUpdateFunction currentUpdateFunction;
 
 static bool GameStateIsValid(GameState state)
 {
@@ -17,24 +32,18 @@ void GameStateInit(GameState initialState)
     currentState = GameStateIsValid(initialState)
         ? initialState
         : GAME_STATE_TITLE;
-    stateStartTick = HAL_GetTick();
 
-    if (currentState == GAME_STATE_PLAYING)
+    if (stateHandlers[currentState].enter != NULL)
     {
-        currentUpdateFunction = InGameStateUpdate;
-        InGameStateEnter();
-    }
-    else
-    {
-        currentUpdateFunction = NULL;
+        stateHandlers[currentState].enter();
     }
 }
 
 void GameStateUpdate(void)
 {
-    if (currentUpdateFunction != NULL)
+    if (stateHandlers[currentState].update != NULL)
     {
-        currentUpdateFunction();
+        stateHandlers[currentState].update();
     }
 }
 
@@ -55,28 +64,17 @@ bool GameStateChange(GameState nextState)
         return true;
     }
 
-    if (currentState == GAME_STATE_PLAYING)
+    if (stateHandlers[currentState].exit != NULL)
     {
-        InGameStateExit();
+        stateHandlers[currentState].exit();
     }
 
     currentState = nextState;
-    stateStartTick = HAL_GetTick();
 
-    if (currentState == GAME_STATE_PLAYING)
+    if (stateHandlers[currentState].enter != NULL)
     {
-        currentUpdateFunction = InGameStateUpdate;
-        InGameStateEnter();
-    }
-    else
-    {
-        currentUpdateFunction = NULL;
+        stateHandlers[currentState].enter();
     }
 
     return true;
-}
-
-uint32_t GameStateGetElapsedMs(void)
-{
-    return HAL_GetTick() - stateStartTick;
 }

@@ -23,6 +23,3 @@ GameState GameStateGet(void);
 
 /* 상태를 변경하고 상태 시작 시간을 갱신한다. */
 bool GameStateChange(GameState nextState);
-
-/* 현재 상태로 전환된 후 지난 시간을 ms 단위로 반환한다. */
-uint32_t GameStateGetElapsedMs(void);
