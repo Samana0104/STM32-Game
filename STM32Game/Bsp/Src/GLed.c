@@ -62,6 +62,28 @@ static void UpdateLedHardware(void)
 // LED 모듈 초기화 함수 (레지스터 상태 초기화 및 하드웨어 갱신)
 void GledInit(void)
 {
+    GPIO_InitTypeDef gpioInit = {0};
+
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+
+    gpioInit.Mode = GPIO_MODE_OUTPUT_PP;
+    gpioInit.Pull = GPIO_NOPULL;
+    gpioInit.Speed = GPIO_SPEED_FREQ_LOW;
+
+    gpioInit.Pin = LED_DATA_PIN;
+    HAL_GPIO_Init(LED_DATA_PORT, &gpioInit);
+
+    gpioInit.Pin = LED_CLOCK_PIN;
+    HAL_GPIO_Init(LED_CLOCK_PORT, &gpioInit);
+
+    gpioInit.Pin = LED_LATCH_PIN;
+    HAL_GPIO_Init(LED_LATCH_PORT, &gpioInit);
+
+    HAL_GPIO_WritePin(LED_DATA_PORT, LED_DATA_PIN, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LED_CLOCK_PORT, LED_CLOCK_PIN, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LED_LATCH_PORT, LED_LATCH_PIN, GPIO_PIN_RESET);
+
     ledRegisterState = 0x00;  // 모든 LED 상태 끔(OFF)으로 초기화
     UpdateLedHardware();      // 초기 상태를 하드웨어에 반영
 }
