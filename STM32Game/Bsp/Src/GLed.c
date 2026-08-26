@@ -4,13 +4,13 @@
 
 // 74HC595 제어용 3선 핀 매핑 (Nucleo-F411RE 기준)
 #define LED_DATA_PORT    GPIOA
-#define LED_DATA_PIN     GPIO_PIN_7   // D11 (PA7) - 직렬 데이터 입력 핀 (SER)
+#define LED_DATA_PIN     GPIO_PIN_0   // D11 (PA7) - 직렬 데이터 입력 핀 (SER)
 
-#define LED_CLOCK_PORT   GPIOA
-#define LED_CLOCK_PIN    GPIO_PIN_5   // D13 (PA5) - 시프트 클럭 핀 (SRCLK)
+#define LED_CLOCK_PORT   GPIOB
+#define LED_CLOCK_PIN    GPIO_PIN_0   // D13 (PA5) - 시프트 클럭 핀 (SRCLK)
 
-#define LED_LATCH_PORT   GPIOB
-#define LED_LATCH_PIN    GPIO_PIN_6   // D10 (PB6) - 래치/레지스터 클럭 핀 (RCLK)
+#define LED_LATCH_PORT   GPIOA
+#define LED_LATCH_PIN    GPIO_PIN_4   // D10 (PB6) - 래치/레지스터 클럭 핀 (RCLK)
 
 #define SHIFT_BIT_COUNT  8            // 74HC595가 처리하는 기본 비트 수 (8비트)
 
@@ -22,19 +22,25 @@ static uint8_t ledRegisterState = 0x00;
 // 8비트 데이터를 MSB(최상위 비트)부터 한 비트씩 74HC595에 전송하는 내부 함수
 static void ShiftOutData(uint8_t data)
 {
+    HAL_GPIO_WritePin(LED_CLOCK_PORT, LED_CLOCK_PIN, GPIO_PIN_RESET);
+    
     for (int i = 0; i < SHIFT_BIT_COUNT; i++)
     {
-        // 현재 전송할 비트가 1인지 0인지 판별 (상위 비트부터 확인)
-        uint8_t bitValue = (data & 0x80) ? 1 : 0;
+        // 최상위 비트(MSB, 0x80)부터 차례대로 검사
+        if (data & 0x80)
+        {
+            HAL_GPIO_WritePin(LED_DATA_PORT, LED_DATA_PIN, GPIO_PIN_SET);
+        }
+        else
+        {
+            HAL_GPIO_WritePin(LED_DATA_PORT, LED_DATA_PIN, GPIO_PIN_RESET);
+        }
         
-        // 데이터 핀에 값 세팅
-        HAL_GPIO_WritePin(LED_DATA_PORT, LED_DATA_PIN, (bitValue == 1) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-        
-        // 클럭 핀에 상승 엣지(Rising Edge) 펄스 생성 -> 칩 내부로 비트가 시프트됨
+        // 클럭 펄스 생성 (Rising Edge)
         HAL_GPIO_WritePin(LED_CLOCK_PORT, LED_CLOCK_PIN, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(LED_CLOCK_PORT, LED_CLOCK_PIN, GPIO_PIN_SET);
         
-        // 다음 비트 전송을 위해 데이터를 왼쪽으로 한 칸 시프트
+        // 다음 비트 전송을 위해 데이터를 왼쪽으로 시프트
         data <<= 1;
     }
 }
