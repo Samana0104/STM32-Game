@@ -19,13 +19,39 @@ typedef struct _ButtonInfo
  * BUTTON_1 -> PA8
  * BUTTON_2 -> PB10
  * BUTTON_3 -> PB4
+ * BUTTON_START -> PB5
  */
 static ButtonInfo buttons[BUTTON_COUNT] =
 {
     { GPIOA, GPIO_PIN_8,  BUTTON_RELEASED },
     { GPIOB, GPIO_PIN_10, BUTTON_RELEASED },
-    { GPIOB, GPIO_PIN_4,  BUTTON_RELEASED }
+    { GPIOB, GPIO_PIN_4,  BUTTON_RELEASED },
+    { GPIOB, GPIO_PIN_5,  BUTTON_RELEASED }
 };
+
+
+/*
+ * 버튼 GPIO 초기화
+ * 각 버튼은 핀과 GND 사이에 연결하는 Active-Low 방식이다.
+ */
+void GButtonInit(void)
+{
+    GPIO_InitTypeDef gpioInit = {0};
+
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+
+    gpioInit.Mode = GPIO_MODE_INPUT;
+    gpioInit.Pull = GPIO_PULLUP;
+
+    gpioInit.Pin = GPIO_PIN_8;
+    HAL_GPIO_Init(GPIOA, &gpioInit);
+
+    gpioInit.Pin = GPIO_PIN_10 | GPIO_PIN_4 | GPIO_PIN_5;
+    HAL_GPIO_Init(GPIOB, &gpioInit);
+
+    UpdateButtonState();
+}
 
 
 /*
