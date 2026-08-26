@@ -1,5 +1,6 @@
 #include "GameState.h"
 #include "InGameState.h"
+#include "ResultState.h"
 #include "TitleState.h"
 
 typedef void (*GameStateFunction)(void);
@@ -16,7 +17,9 @@ static const GameStateHandler stateHandlers[GAME_STATE_COUNT] =
     [GAME_STATE_TITLE]   = { TitleStateEnter, TitleStateUpdate, TitleStateExit },
     [GAME_STATE_READY]   = { NULL, NULL,              NULL },
     [GAME_STATE_PLAYING] = { InGameStateEnter, InGameStateUpdate, InGameStateExit },
-    [GAME_STATE_RESULT]  = { NULL, NULL,              NULL }
+    [GAME_STATE_RESULT]  = { ResultStateEnter,
+                             ResultStateUpdate,
+                             ResultStateExit }
 };
 
 static GameState currentState = GAME_STATE_TITLE;
