@@ -42,9 +42,7 @@ int GameMain(void)
 
     while (1)
     {
-        /* 1. 데이터 업데이트 */
         GameUpdate();
-        UpdateButtonState(); // 현재 핀 상태를 한 번만 읽어옵니다.
 
         // UpdateFnd(); /* 5개 디스플레이를 순환 점등 */
         // HAL_Delay(1);
