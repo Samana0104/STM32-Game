@@ -1,9 +1,5 @@
-#ifndef G_JOYSTICK_H
-#define G_JOYSTICK_H
-
-#include <stdbool.h>
-#include <stdint.h>
-
+#pragma once
+#include "main.h"
 typedef enum
 {
     JOYSTICK_CENTER = 0,
