@@ -1,4 +1,5 @@
 #include "GCheat.h"
+#include "GLed.h"
 #include "GUsart.h"
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_uart.h"
@@ -29,6 +30,7 @@ static uint32_t gpioLastReport;
 static void CommandHelp(int argc, char *argv[]);
 static void CommandWrite(int argc, char *argv[]);
 static void CommandRead(int argc, char *argv[]);
+static void CommandLed(int argc, char *argv[]);
 static void CommandFps(int argc, char *argv[]);
 static void CommandStop(int argc, char *argv[]);
 
@@ -37,6 +39,7 @@ static const CommandEntry commandTable[] =
     { "help",  "help",                    CommandHelp  },
     { "write", "write <A|B|C|H> <0-15> <0|1>", CommandWrite },
     { "read",  "read <A|B|C|H> <0-15>",       CommandRead  },
+    { "led",   "led <1-7|all> <0|1>",           CommandLed   },
     { "fps",   "fps",                     CommandFps   },
     { "stop",  "stop",                    CommandStop  }
 };
@@ -158,6 +161,48 @@ static void CommandRead(int argc, char *argv[])
 
     ReportGpio();
     G_LOG(INFO, "GPIO monitoring started (every 3 seconds).\r\n");
+}
+
+static void CommandLed(int argc, char *argv[])
+{
+    uint32_t value;
+
+    if (argc != 3)
+    {
+        G_LOG(WARNING, "Usage: led <1-7|all> <0|1>\r\n");
+        return;
+    }
+
+    if (!ParseNumber(argv[2], 1U, &value))
+    {
+        G_LOG(WARNING, "LED state must be 0 (off) or 1 (on).\r\n");
+        return;
+    }
+
+    const LedState state = value ? LED_ON : LED_OFF;
+
+    if (strcmp(argv[1], "all") == 0)
+    {
+        for (LedId id = LED_ID_1; id < LED_MAX; ++id)
+        {
+            SetLedState(id, state);
+        }
+
+        G_LOG(INFO, "All LEDs <- %lu\r\n", (unsigned long)value);
+        return;
+    }
+
+    uint32_t ledNumber;
+    if (!ParseNumber(argv[1], (uint32_t)LED_MAX, &ledNumber) ||
+        (ledNumber == 0U))
+    {
+        G_LOG(WARNING, "LED number must be 1-7 or 'all'.\r\n");
+        return;
+    }
+
+    SetLedState((LedId)(ledNumber - 1U), state);
+    G_LOG(INFO, "LED %lu <- %lu\r\n", (unsigned long)ledNumber,
+          (unsigned long)value);
 }
 
 static void CommandFps(int argc, char *argv[])
