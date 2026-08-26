@@ -85,24 +85,18 @@ void Error_Handler(void);
 #define LED_CLOCK_GPIO_Port GPIOA
 #define ONBOARD_LD2_Pin GPIO_PIN_5
 #define ONBOARD_LD2_GPIO_Port GPIOA
-#define FND_SEG_B_Pin GPIO_PIN_6
-#define FND_SEG_B_GPIO_Port GPIOA
-#define FND_SEG_C_Pin GPIO_PIN_7
-#define FND_SEG_C_GPIO_Port GPIOA
 #define FND_DIG_3_Pin GPIO_PIN_4
 #define FND_DIG_3_GPIO_Port GPIOC
 #define FND_DIG_4_Pin GPIO_PIN_5
 #define FND_DIG_4_GPIO_Port GPIOC
-#define FND_SEG_A_Pin GPIO_PIN_0
-#define FND_SEG_A_GPIO_Port GPIOB
-#define FND_SEG_D_Pin GPIO_PIN_1
-#define FND_SEG_D_GPIO_Port GPIOB
-#define FND_SEG_E_Pin GPIO_PIN_2
-#define FND_SEG_E_GPIO_Port GPIOB
+#define FND_DATA_Pin GPIO_PIN_0
+#define FND_DATA_GPIO_Port GPIOB
+#define FND_LATCH_Pin GPIO_PIN_1
+#define FND_LATCH_GPIO_Port GPIOB
+#define FND_CLOCK_Pin GPIO_PIN_2
+#define FND_CLOCK_GPIO_Port GPIOB
 #define BUTTON_3_Pin GPIO_PIN_10
 #define BUTTON_3_GPIO_Port GPIOB
-#define FND_SEG_DP_Pin GPIO_PIN_12
-#define FND_SEG_DP_GPIO_Port GPIOB
 #define FND_DIG_COM_Pin GPIO_PIN_6
 #define FND_DIG_COM_GPIO_Port GPIOC
 #define BUTTON_2_Pin GPIO_PIN_8
@@ -121,10 +115,6 @@ void Error_Handler(void);
 #define BUTTON_4_GPIO_Port GPIOB
 #define BUTTON_5_Pin GPIO_PIN_5
 #define BUTTON_5_GPIO_Port GPIOB
-#define FND_SEG_F_Pin GPIO_PIN_6
-#define FND_SEG_F_GPIO_Port GPIOB
-#define FND_SEG_G_Pin GPIO_PIN_7
-#define FND_SEG_G_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

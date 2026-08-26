@@ -12,9 +12,9 @@
 #define FND_DATA_PORT  GPIOB
 #define FND_DATA_PIN   GPIO_PIN_0
 #define FND_CLOCK_PORT GPIOB
-#define FND_CLOCK_PIN  GPIO_PIN_1
+#define FND_CLOCK_PIN  GPIO_PIN_2
 #define FND_LATCH_PORT GPIOB
-#define FND_LATCH_PIN  GPIO_PIN_2
+#define FND_LATCH_PIN  GPIO_PIN_1
 
 /* Common Cathode 기준 폰트 테이블 */
 static const uint8_t segmentTable[10] = {
