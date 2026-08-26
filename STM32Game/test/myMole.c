@@ -1,6 +1,10 @@
 #include "myMole.h"
 
 #include "main.h"
+<<<<<<< HEAD
+=======
+#include "mySn74hc595.h"
+>>>>>>> 0a21ac5a8c552d29317914685e2b2b6597f228d6
 
 /*
  * 두더지 게임 동작
