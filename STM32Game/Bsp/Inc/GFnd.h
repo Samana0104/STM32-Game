@@ -1,10 +1,6 @@
-#ifndef GFND_H
-#define GFND_H
-
+#pragma once
 #include "main.h"
 #include "stm32f4xx_hal.h"
-#include <stdint.h>
-#include <stdbool.h>
 
 #define FND_4DIGIT_COUNT 4
 #define FND_TOTAL_DIGITS 5
@@ -30,5 +26,3 @@ void SetFndSingleDigit(uint8_t digit);
 void SetFnd4DigitNumber(uint16_t number);
 void UpdateFnd(void);
 void ClearFnd(void);
-
-#endif

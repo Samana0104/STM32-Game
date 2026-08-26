@@ -1,7 +1,5 @@
 #pragma once
 #include "main.h"
-#include <stdbool.h>
-#include <stdint.h>
 
 typedef enum
 {

@@ -1,9 +1,5 @@
-#ifndef G_LED_H
-#define G_LED_H
-
-#include <stdint.h>
-#include <stdbool.h>
-
+#pragma once
+#include <main.h>
 typedef enum
 {
     LED_ID_1 = 0, // Q0 (15번 핀)

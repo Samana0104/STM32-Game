@@ -1,8 +1,6 @@
 #pragma once
 
 #include "main.h"
-#include <stdbool.h>
-
 
 #define BUTTON_COUNT 7
 
