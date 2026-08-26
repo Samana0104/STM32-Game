@@ -2,14 +2,39 @@
 #include "GButton.h"
 #include "GLed.h"
 #include "GCheat.h"
+#include <stdlib.h>
+
+#define MOLE_VISIBLE_TIME_MS 800U
 
 static bool isActive;
+static uint32_t score;
+static uint32_t moleStartTick;
+static LedId activeMole;
+
+static void SpawnMole(uint32_t now)
+{
+    activeMole = (LedId)(rand() % LED_MAX);
+    moleStartTick = now;
+    SetLedState(activeMole, LED_ON);
+}
+
+static void HideMole(void)
+{
+    if (activeMole < LED_MAX)
+    {
+        SetLedState(activeMole, LED_OFF);
+        activeMole = LED_MAX;
+    }
+}
 
 void InGameStateEnter(void)
 {
     isActive = true;
-
-    /* TODO: 점수, 타이머, 두더지 상태를 초기화한다. */
+    score = 0U;
+    moleStartTick = HAL_GetTick();
+    srand((unsigned int)moleStartTick);
+    activeMole = LED_MAX;
+    SpawnMole(moleStartTick);
     G_LOG(INFO, "InGameState entered. \r\n");
 }
 
@@ -20,14 +45,24 @@ void InGameStateUpdate(void)
         return;
     }
 
-    SetLedState(LED_ID_1,
-                IsButtonPressed(BUTTON_1) ? LED_ON : LED_OFF);
-    SetLedState(LED_ID_2,
-                IsButtonPressed(BUTTON_2) ? LED_ON : LED_OFF);
-    SetLedState(LED_ID_3,
-                IsButtonPressed(BUTTON_3) ? LED_ON : LED_OFF);
+    const uint32_t now = HAL_GetTick();
 
-    /* TODO: 두더지 생성, 점수 및 제한 시간을 갱신한다. */
+    if ((activeMole < LED_MAX) &&
+        WasButtonPressed((ButtonId)activeMole))
+    {
+        ++score;
+        HideMole();
+    }
+    else if ((activeMole < LED_MAX) &&
+             ((now - moleStartTick) >= MOLE_VISIBLE_TIME_MS))
+    {
+        HideMole();
+    }
+
+    if (activeMole == LED_MAX)
+    {
+        SpawnMole(now);
+    }
 }
 
 void InGameStateExit(void)
@@ -37,7 +72,7 @@ void InGameStateExit(void)
         return;
     }
 
-    /* TODO: 활성화된 LED와 인게임 자원을 정리한다. */
+    HideMole();
     isActive = false;
     G_LOG(INFO, "InGameState exited. \r\n");
 }
