@@ -105,6 +105,16 @@ static void UartStoreReceivedBytes(const uint8_t *data, uint16_t size)
             continue;
         }
 
+        /* Backspace 또는 DEL 입력 시 마지막으로 저장한 문자를 지운다. */
+        if ((byte == '\b') || (byte == 0x7FU))
+        {
+            if (commandLength > 0U)
+            {
+                --commandLength;
+            }
+            continue;
+        }
+
         /*
          * 4. 줄바꿈을 받으면 현재까지 누적한 문자열을 종료하고
          *    메인 루프에 완성된 명령이 있음을 알린다.
