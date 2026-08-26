@@ -184,6 +184,7 @@ bool IsButtonReleased(ButtonId id)
     return GetButtonState(id) == BUTTON_RELEASED;
 }
 
+<<<<<<< Updated upstream
 
 /*
  * 디바운싱이 끝난 뒤 버튼이 떼어진 첫 업데이트에서만 true를 반환한다.
@@ -191,9 +192,38 @@ bool IsButtonReleased(ButtonId id)
 bool WasButtonReleased(ButtonId id)
 {
     if (!IsButtonIdValid(id))
+=======
+/*
+ * 특정 버튼이 방금 막 눌렸는지 확인 (단발성 인식)
+ * 꾹 누르고 있어도 최초 1회만 true를 반환하고, 뗄 때까지 false를 유지함
+ */
+bool IsButtonClicked(ButtonId id)
+{
+    if (id < BUTTON_1 || id >= BUTTON_COUNT)
+>>>>>>> Stashed changes
     {
         return false;
     }
 
+<<<<<<< Updated upstream
     return buttons[id].releasedEvent;
 }
+=======
+    // 직전 프레임의 버튼 상태를 기억하기 위한 static 배열
+    static ButtonState lastStates[BUTTON_COUNT] = { BUTTON_RELEASED, };
+    
+    ButtonState currentState = GetButtonState(id);
+    bool isClicked = false;
+
+    // 이전에 떼어져 있었고(RELEASED), 이번에 눌렸다면(PRESSED) -> 딱 1회 참 인정
+    if (lastStates[id] == BUTTON_RELEASED && currentState == BUTTON_PRESSED)
+    {
+        isClicked = true;
+    }
+
+    // 현재 상태를 다음 비교를 위해 저장
+    lastStates[id] = currentState;
+
+    return isClicked;
+}
+>>>>>>> Stashed changes
