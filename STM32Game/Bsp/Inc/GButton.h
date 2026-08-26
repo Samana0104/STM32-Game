@@ -18,8 +18,8 @@ typedef enum
     BUTTON_4,
     BUTTON_5,
     BUTTON_6,
-    BUTTON_7
-
+    BUTTON_7,
+    BUTTON_START
 } ButtonId;
 
 
@@ -69,12 +69,9 @@ bool WasButtonPressed(ButtonId id);
  */
 bool IsButtonReleased(ButtonId id);
 
-<<<<<<< Updated upstream
-
 /*
  * 직전 업데이트에서 버튼이 떼어졌는지 확인
  */
 bool WasButtonReleased(ButtonId id);
-=======
+
 bool IsButtonClicked(ButtonId id);
->>>>>>> Stashed changes
