@@ -28,11 +28,6 @@
 /* USER CODE BEGIN Includes */
 #include "GameMain.h"
 #include "GCheat.h"
-#include "GUsart.h"
-#include "GButton.h"
-#include "GJoystick.h"
-#include "Lcd1602.h"
-#include "GFnd.h"
 
 /* USER CODE END Includes */
 

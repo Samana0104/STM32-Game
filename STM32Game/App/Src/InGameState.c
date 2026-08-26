@@ -3,7 +3,7 @@
 #include "GCheat.h"
 #include "GFnd.h"
 #include "GLed.h"
-#include "Lcd1602.h"
+#include "GLcd1602.h"
 
 #define GAME_STAGE             1U
 #define MOLE_COUNT             ((uint8_t)LED_MAX)

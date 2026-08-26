@@ -4,7 +4,7 @@
 #include "GCheat.h"
 #include "GJoystick.h"
 #include "InGameState.h"
-#include "Lcd1602.h"
+#include "GLcd1602.h"
 
 static bool isActive;
 

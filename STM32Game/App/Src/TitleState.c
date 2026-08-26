@@ -3,7 +3,7 @@
 #include "GameState.h"
 #include "GCheat.h"
 #include "GJoystick.h"
-#include "Lcd1602.h"
+#include "GLcd1602.h"
 
 #define WELCOME_DISPLAY_MS 2000U
 
@@ -74,8 +74,7 @@ static void UpdateTitleMenu(void)
 
 static void UpdateExitScreen(void)
 {
-    if (WasJoystickMoved()
-        && GetJoystickDirection() == JOYSTICK_UP)
+    if (WasJoystickMoved() && GetJoystickDirection() == JOYSTICK_UP)
     {
         GameStateChange(GAME_STATE_PLAYING);
     }

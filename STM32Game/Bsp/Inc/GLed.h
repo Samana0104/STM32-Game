@@ -20,5 +20,3 @@ typedef enum
 
 void GledInit(void);
 void SetLedState(LedId id, LedState state);
-
-#endif /* G_LED_H */

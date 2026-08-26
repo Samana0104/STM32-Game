@@ -1,8 +1,6 @@
-#include "Lcd1602.h"
+#include "GLcd1602.h"
 
 #include "stm32f4xx_hal.h"
-#include <stdarg.h>
-#include <stdio.h>
 
 /* PCF8574T address range is 0x20-0x27. Change this if A0-A2 differ. */
 #define LCD_I2C_ADDRESS_MIN   0x20U

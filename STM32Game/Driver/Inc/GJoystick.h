@@ -27,5 +27,3 @@ bool WasJoystickMoved(void);
 /* 가장 최근에 측정한 12-bit ADC 원시 값을 반환한다. */
 uint16_t GetJoystickX(void);
 uint16_t GetJoystickY(void);
-
-#endif /* G_JOYSTICK_H */

@@ -7,7 +7,7 @@
 #include "GLed.h"
 #include "GUsart.h"
 #include "InGameState.h"
-#include "Lcd1602.h"
+#include "GLcd1602.h"
 
 #include "stm32f4xx_hal.h"
 
