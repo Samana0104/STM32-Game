@@ -1,12 +1,15 @@
 #include "GameMain.h"
 #include "GCheat.h"
 #include "GLed.h"
+#include "GButton.h"
 #include "GUsart.h"
+#include "stm32f4xx_hal.h"
 
 static void GameInit(void)
 {
     GledInit();
     UartInit();
+    GButtonInit();
 
 #ifndef NDEBUG
     CheatInit();
@@ -30,13 +33,36 @@ int GameMain(void)
 
     while (1)
     {
-
-        // SetLedState(LED_ID_1, LED_ON);
-        // HAL_Delay(500);
-
-        // SetLedState(LED_ID_1, LED_OFF);
-        // HAL_Delay(500);
+        /* 1. 데이터 업데이트 */
         GameUpdate();
+        UpdateButtonState(); // 현재 핀 상태를 한 번만 읽어옵니다.
+
+        /* 2. 각 버튼 독립 제어 */
+        
+        // BUTTON_1 제어
+        if (IsButtonPressed(BUTTON_1)) {
+            SetLedState(LED_ID_1, LED_ON);
+        } else {
+            SetLedState(LED_ID_1, LED_OFF);
+        }
+
+        // BUTTON_2 제어
+        if (IsButtonPressed(BUTTON_2)) {
+            SetLedState(LED_ID_2, LED_ON);
+        } else {
+            SetLedState(LED_ID_2, LED_OFF);
+        }
+
+        // BUTTON_3 제어
+        if (IsButtonPressed(BUTTON_3)) {
+            SetLedState(LED_ID_3, LED_ON);
+        } else {
+            SetLedState(LED_ID_3, LED_OFF);
+        }
+
+        /* 3. 루프 지연 (디바운싱 및 CPU 점유율 조절) */
+        HAL_Delay(10);
+
     }
 
     G_LOG(INFO, "GameMain exited. \r\n");
