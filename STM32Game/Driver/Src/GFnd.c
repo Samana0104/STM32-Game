@@ -69,11 +69,11 @@ static void SelectDigit(uint8_t index)
 
 void FndInit(void)
 {
-    ClearFnd();
+    FndClear();
     SelectDigit(0xFF);
 }
 
-void ClearFnd(void)
+void FndClear(void)
 {
     ShiftOutSegmentData(0x00);
 }
@@ -100,10 +100,11 @@ void SetFnd4DigitNumber(uint16_t number)
     displayDigits[4] = number % 10;
 }
 
-void UpdateFnd(void)
+void FndUpdate(void)
 {
-    /* 잔상 방지를 위해 자릿수 전환 전 소등 */
+    /* 잔상 방지를 위해 자릿수 전환 전 공통 접지 및 세그먼트 전압 완전 차단 */
     SelectDigit(0xFF);
+    ShiftOutSegmentData(0x00); /* <--- 이 줄을 추가하여 0V 출력 강제 (잔상 제거) */
 
     uint8_t digitVal = displayDigits[currentDigitIndex];
     ShiftOutSegmentData(segmentTable[digitVal]);
