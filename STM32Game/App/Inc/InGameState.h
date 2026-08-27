@@ -19,3 +19,9 @@ bool InGameStateIsFinished(void);
 
 /* 현재 점수를 반환한다. */
 uint32_t InGameStateGetScore(void);
+
+/* 현재 연속 성공 횟수를 반환한다. */
+uint32_t InGameStateGetCombo(void);
+
+/* 현재 게임에서 두더지를 놓친 횟수를 반환한다. */
+uint32_t InGameStateGetMissCount(void);

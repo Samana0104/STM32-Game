@@ -1,9 +1,9 @@
 #include "InGameState.h"
+#include "GameLcd.h"
 #include "GButton.h"
 #include "GCheat.h"
 #include "GFnd.h"
 #include "GLed.h"
-#include "GLcd1602.h"
 
 #define GAME_STAGE             1U
 #define MOLE_COUNT             ((uint8_t)LED_MAX)
@@ -17,6 +17,8 @@ static uint8_t currentMole = NO_ACTIVE_MOLE;
 static uint32_t startTick;
 static uint32_t moleStartTick;
 static uint32_t score;
+static uint32_t combo;
+static uint32_t missCount;
 static uint32_t randomState;
 
 static void TurnOffCurrentMole(void)
@@ -62,6 +64,8 @@ void InGameStateEnter(void)
     startTick = HAL_GetTick();
     moleStartTick = startTick;
     score = 0U;
+    combo = 0U;
+    missCount = 0U;
     randomState = startTick ^ 0xA5A5A5A5U;
     currentMole = NO_ACTIVE_MOLE;
     isFinished = false;
@@ -70,11 +74,7 @@ void InGameStateEnter(void)
     SetFndSingleDigit(GAME_STAGE);
     SetFnd4DigitNumber(0U);
 
-    if (Lcd1602IsReady())
-    {
-        /* LCD는 게임 로직 없이 현재 화면의 문자열만 출력한다. */
-        Lcd1602Printf("GAME START\nCatch the mole!");
-    }
+    GameLcdShowCombo(combo);
 
     SpawnMole(startTick);
     G_LOG(INFO, "InGameState entered.\r\n");
@@ -102,11 +102,16 @@ void InGameStateUpdate(void)
         && WasButtonPressed((ButtonId)currentMole))
     {
         score++;
+        combo++;
         SetFnd4DigitNumber((uint16_t)score);
+        GameLcdShowCombo(combo);
         SpawnMole(currentTick);
     }
     else if ((currentTick - moleStartTick) >= MOLE_VISIBLE_MS)
     {
+        missCount++;
+        combo = 0U;
+        GameLcdShowMiss();
         SpawnMole(currentTick);
     }
 }
@@ -136,4 +141,14 @@ bool InGameStateIsFinished(void)
 uint32_t InGameStateGetScore(void)
 {
     return score;
+}
+
+uint32_t InGameStateGetCombo(void)
+{
+    return combo;
+}
+
+uint32_t InGameStateGetMissCount(void)
+{
+    return missCount;
 }
