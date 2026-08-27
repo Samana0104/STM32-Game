@@ -8,19 +8,23 @@
 #include "GLed.h"
 #include "GUsart.h"
 #include "InGameState.h"
-#include "GBuzzer.h"
 #include "GLcd1602.h"
 #include "ReadyState.h"
+#include "SoundPlayer.h"
 #include "stm32f4xx_hal.h"
 
 #define INITIAL_STAGE 1U
 
 static void GameInit(void)
 {
+#ifndef NDEBUG
+    CheatInit();
+#endif
+
     GledInit();
     GButtonInit();
     GJoystickInit();
-    GBuzzerInit();
+    SoundPlayerInit();
     UartInit();
     FndInit();
     GameRecordInit();
@@ -35,10 +39,6 @@ static void GameInit(void)
 
     /* TitleState가 LCD 메뉴 출력과 조이스틱 선택을 담당한다. */
     GameStateInit(GAME_STATE_TITLE);
-
-#ifndef NDEBUG
-    CheatInit();
-#endif
 }
 
 static void FinishCurrentStage(void)
@@ -62,6 +62,7 @@ static void GameUpdate(void)
     UpdateJoystickState();
 
     GameStateUpdate();
+    SoundPlayerUpdate();
 
     if (GameStateGet() == GAME_STATE_PLAYING && InGameStateIsFinished())
     {
@@ -79,6 +80,7 @@ int GameMain(void)
     GameInit();
     G_LOG(INFO, "Game started successfully.\r\n");
 
+    SoundPlayerPlay(SOUND_ID_TITLE_BGM);
     while (1)
     {
         GameUpdate();

@@ -1,0 +1,20 @@
+#include "SoundResource.h"
+
+static const SoundStep steps[] =
+{
+    {SOUND_NOTE_DO, SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_RE, SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_MI, SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_FA, SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_SOL, SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_LA, SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_SI, SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_HIGH_DO, SOUND_DELAY_LONG},
+};
+
+const SoundSequence scaleSound =
+{
+    steps,
+    SOUND_STEP_COUNT(steps),
+    false,
+};
