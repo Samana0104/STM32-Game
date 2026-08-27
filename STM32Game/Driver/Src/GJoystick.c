@@ -84,8 +84,8 @@ static JoystickDirection CalculateDirection(uint16_t x, uint16_t y)
     }
 
     return y < JOYSTICK_ADC_MIDPOINT
-        ? JOYSTICK_DOWN
-        : JOYSTICK_UP;
+        ? JOYSTICK_UP
+        : JOYSTICK_DOWN;
 }
 
 void GJoystickInit(void)

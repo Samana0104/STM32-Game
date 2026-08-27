@@ -109,19 +109,26 @@ static bool IsGameTimeOver(uint32_t currentTick)
 
 void InGameStateEnter(void)
 {
-    stageConfig = GameStageGetConfig(ReadyStateGetStage());
+    GameStage currentStage = ReadyStateGetStage();
+
+    stageConfig = GameStageGetConfig(currentStage);
     startTick = HAL_GetTick();
     moleStartTick = startTick;
-    score = 0U;
-    combo = 0U;
-    missCount = 0U;
+
+    if (currentStage == GAME_STAGE_1)
+    {
+        score = 0U;
+        combo = 0U;
+        missCount = 0U;
+    }
+
     randomState = startTick ^ 0xA5A5A5A5U;
     activeMoles = 0U;
     isFinished = false;
     isActive = true;
 
-    SetFndSingleDigit((uint8_t)ReadyStateGetStage());
-    SetFnd4DigitNumber(0U);
+    SetFndSingleDigit((uint8_t)currentStage);
+    SetFnd4DigitNumber((uint16_t)score);
 
     GameLcdShowCombo(combo);
 

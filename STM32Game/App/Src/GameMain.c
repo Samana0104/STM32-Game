@@ -9,6 +9,7 @@
 #include "GUsart.h"
 #include "InGameState.h"
 #include "GLcd1602.h"
+#include "ReadyState.h"
 
 #include "stm32f4xx_hal.h"
 
@@ -39,6 +40,21 @@ static void GameInit(void)
 #endif
 }
 
+static void FinishCurrentStage(void)
+{
+    GameStage currentStage = ReadyStateGetStage();
+
+    if (currentStage < GAME_STAGE_5)
+    {
+        ReadyStateSetStage((GameStage)(currentStage + 1));
+        GameStateChange(GAME_STATE_READY);
+    }
+    else
+    {
+        GameStateChange(GAME_STATE_RESULT);
+    }
+}
+
 static void GameUpdate(void)
 {
     UpdateButtonState();
@@ -49,7 +65,7 @@ static void GameUpdate(void)
     if (GameStateGet() == GAME_STATE_PLAYING
         && InGameStateIsFinished())
     {
-        GameStateChange(GAME_STATE_RESULT);
+        FinishCurrentStage();
     }
 
 #ifndef NDEBUG
