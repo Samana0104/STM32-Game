@@ -73,18 +73,16 @@ void Error_Handler(void);
 #define FND_DIG_1_GPIO_Port GPIOC
 #define FND_DIG_2_Pin GPIO_PIN_3
 #define FND_DIG_2_GPIO_Port GPIOC
-#define LED_DATA_Pin GPIO_PIN_0
-#define LED_DATA_GPIO_Port GPIOA
-#define LED_LATCH_Pin GPIO_PIN_1
-#define LED_LATCH_GPIO_Port GPIOA
 #define USART_TX_Pin GPIO_PIN_2
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3
 #define USART_RX_GPIO_Port GPIOA
-#define LED_CLOCK_Pin GPIO_PIN_4
-#define LED_CLOCK_GPIO_Port GPIOA
 #define ONBOARD_LD2_Pin GPIO_PIN_5
 #define ONBOARD_LD2_GPIO_Port GPIOA
+#define LED_DATA_Pin GPIO_PIN_6
+#define LED_DATA_GPIO_Port GPIOA
+#define LED_CLOCK_Pin GPIO_PIN_7
+#define LED_CLOCK_GPIO_Port GPIOA
 #define FND_DIG_3_Pin GPIO_PIN_4
 #define FND_DIG_3_GPIO_Port GPIOC
 #define FND_DIG_4_Pin GPIO_PIN_5
@@ -115,6 +113,8 @@ void Error_Handler(void);
 #define BUTTON_4_GPIO_Port GPIOB
 #define BUTTON_5_Pin GPIO_PIN_5
 #define BUTTON_5_GPIO_Port GPIOB
+#define LED_LATCH_Pin GPIO_PIN_6
+#define LED_LATCH_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

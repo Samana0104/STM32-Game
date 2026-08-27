@@ -4,13 +4,13 @@
 
 // 74HC595 제어용 3선 핀 매핑 (Nucleo-F411RE 기준)
 #define LED_DATA_PORT    GPIOA
-#define LED_DATA_PIN     GPIO_PIN_0   // A0 (PA0) - 직렬 데이터 입력 핀 (SER)
+#define LED_DATA_PIN     GPIO_PIN_6   // A0 (PA0) - 직렬 데이터 입력 핀 (SER)
 
 #define LED_CLOCK_PORT   GPIOA
-#define LED_CLOCK_PIN    GPIO_PIN_4   // A2 (PA4) - 시프트 클럭 핀 (SRCLK)
+#define LED_CLOCK_PIN    GPIO_PIN_7   // A2 (PA4) - 시프트 클럭 핀 (SRCLK)
 
-#define LED_LATCH_PORT   GPIOA
-#define LED_LATCH_PIN    GPIO_PIN_1   // A1 (PA1) - 래치/레지스터 클럭 핀 (RCLK)
+#define LED_LATCH_PORT   GPIOB
+#define LED_LATCH_PIN    GPIO_PIN_6   // A1 (PA1) - 래치/레지스터 클럭 핀 (RCLK)
 
 #define SHIFT_BIT_COUNT  8            // 74HC595가 처리하는 기본 비트 수 (8비트)
 
