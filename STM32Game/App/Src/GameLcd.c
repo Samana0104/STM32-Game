@@ -9,11 +9,21 @@ static uint32_t ClampRecordValue(uint32_t value)
     return value > LCD_RECORD_MAX ? LCD_RECORD_MAX : value;
 }
 
-void GameLcdShowTitleMenu(void)
+void GameLcdShowTitleMenu(bool recordSelected)
 {
     if (Lcd1602IsReady())
     {
-        Lcd1602Printf("1.GameStart\n2.Record");
+        Lcd1602Printf(recordSelected
+                          ? " 1.GameStart\n>2.Record"
+                          : ">1.GameStart\n 2.Record");
+    }
+}
+
+void GameLcdShowCountdown(uint8_t stage, const char *text)
+{
+    if (Lcd1602IsReady() && text != NULL)
+    {
+        Lcd1602Printf("STAGE %u\n%s", (unsigned int)stage, text);
     }
 }
 

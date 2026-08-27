@@ -5,6 +5,7 @@
 #include "GameState.h"
 #include "GCheat.h"
 #include "GJoystick.h"
+#include "ReadyState.h"
 
 typedef enum
 {
@@ -12,37 +13,71 @@ typedef enum
     TITLE_SCREEN_RECORD
 } TitleScreen;
 
+typedef enum
+{
+    TITLE_MENU_GAME_START = 0,
+    TITLE_MENU_RECORD
+} TitleMenuItem;
+
 static bool isActive;
 static TitleScreen currentScreen;
+static TitleMenuItem selectedMenuItem;
+
+static void PrintTitleMenu(void)
+{
+    GameLcdShowTitleMenu(selectedMenuItem == TITLE_MENU_RECORD);
+}
 
 static void UpdateTitleMenu(void)
 {
-    if (WasJoystickMoved()
-        && GetJoystickDirection() == JOYSTICK_UP)
+    JoystickDirection direction;
+
+    if (!WasJoystickMoved())
     {
-        GameStateChange(GAME_STATE_PLAYING);
+        return;
     }
-    else if (WasJoystickMoved()
-        && GetJoystickDirection() == JOYSTICK_DOWN)
+
+    direction = GetJoystickDirection();
+
+    if (direction == JOYSTICK_LEFT)
     {
-        currentScreen = TITLE_SCREEN_RECORD;
-        GameLcdShowRecord(GameRecordGetBestScore(),
-                          GameRecordGetLastMissCount());
+        if (selectedMenuItem != TITLE_MENU_GAME_START)
+        {
+            selectedMenuItem = TITLE_MENU_GAME_START;
+            PrintTitleMenu();
+        }
+    }
+    else if (direction == JOYSTICK_RIGHT)
+    {
+        if (selectedMenuItem != TITLE_MENU_RECORD)
+        {
+            selectedMenuItem = TITLE_MENU_RECORD;
+            PrintTitleMenu();
+        }
+    }
+    else if (direction == JOYSTICK_UP)
+    {
+        if (selectedMenuItem == TITLE_MENU_GAME_START)
+        {
+            ReadyStateSetStage(GAME_STAGE_1);
+            GameStateChange(GAME_STATE_READY);
+        }
+        else
+        {
+            currentScreen = TITLE_SCREEN_RECORD;
+            GameLcdShowRecord(GameRecordGetBestScore(),
+                              GameRecordGetLastMissCount());
+        }
     }
 }
 
 static void UpdateRecordScreen(void)
 {
     if (WasJoystickMoved()
-        && GetJoystickDirection() == JOYSTICK_UP)
-    {
-        GameStateChange(GAME_STATE_PLAYING);
-    }
-    else if (WasJoystickMoved()
         && GetJoystickDirection() == JOYSTICK_DOWN)
     {
         currentScreen = TITLE_SCREEN_MENU;
-        GameLcdShowTitleMenu();
+        PrintTitleMenu();
     }
 }
 
@@ -50,7 +85,8 @@ void TitleStateEnter(void)
 {
     isActive = true;
     currentScreen = TITLE_SCREEN_MENU;
-    GameLcdShowTitleMenu();
+    selectedMenuItem = TITLE_MENU_GAME_START;
+    PrintTitleMenu();
     G_LOG(INFO, "TitleState entered. \r\n");
 }
 

@@ -4,8 +4,8 @@
 #include "GCheat.h"
 #include "GFnd.h"
 #include "GLed.h"
+#include "ReadyState.h"
 
-#define GAME_STAGE             1U
 #define MOLE_COUNT             ((uint8_t)LED_MAX)
 #define GAME_DURATION_MS       30000U
 #define MOLE_VISIBLE_MS        800U
@@ -71,7 +71,7 @@ void InGameStateEnter(void)
     isFinished = false;
     isActive = true;
 
-    SetFndSingleDigit(GAME_STAGE);
+    SetFndSingleDigit((uint8_t)ReadyStateGetStage());
     SetFnd4DigitNumber(0U);
 
     GameLcdShowCombo(combo);

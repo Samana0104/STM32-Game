@@ -1,5 +1,6 @@
 #include "GameState.h"
 #include "InGameState.h"
+#include "ReadyState.h"
 #include "ResultState.h"
 #include "TitleState.h"
 
@@ -15,7 +16,9 @@ typedef struct
 static const GameStateHandler stateHandlers[GAME_STATE_COUNT] =
 {
     [GAME_STATE_TITLE]   = { TitleStateEnter, TitleStateUpdate, TitleStateExit },
-    [GAME_STATE_READY]   = { NULL, NULL,              NULL },
+    [GAME_STATE_READY]   = { ReadyStateEnter,
+                             ReadyStateUpdate,
+                             ReadyStateExit },
     [GAME_STATE_PLAYING] = { InGameStateEnter, InGameStateUpdate, InGameStateExit },
     [GAME_STATE_RESULT]  = { ResultStateEnter,
                              ResultStateUpdate,

@@ -6,6 +6,7 @@
 #include "GCheat.h"
 #include "GJoystick.h"
 #include "InGameState.h"
+#include "ReadyState.h"
 
 #define GAME_OVER_DISPLAY_MS 2000U
 
@@ -48,7 +49,8 @@ void ResultStateUpdate(void)
     if (WasJoystickMoved()
         && GetJoystickDirection() == JOYSTICK_UP)
     {
-        GameStateChange(GAME_STATE_PLAYING);
+        ReadyStateSetStage(GAME_STAGE_1);
+        GameStateChange(GAME_STATE_READY);
     }
     else if (WasJoystickMoved()
         && GetJoystickDirection() == JOYSTICK_DOWN)

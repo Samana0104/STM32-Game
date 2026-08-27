@@ -66,7 +66,7 @@ int GameMain(void)
     while (1)
     {
         GameUpdate();
-        UpdateFnd();
+        FndUpdate();
         HAL_Delay(1);
     }
 
