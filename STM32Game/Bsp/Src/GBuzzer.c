@@ -2,6 +2,25 @@
 #include "GCheat.h"
 #include "GTimer.h"
 
+static const TimerOutput timerOutputs[] =
+{
+    TIMER_OUTPUT_BUZZER_SOUND,
+    TIMER_OUTPUT_BUZZER_EFFECT_SOUND,
+};
+
+static bool GetTimerOutput(BuzzerOutput output, TimerOutput *timerOutput)
+{
+    const uint32_t index = (uint32_t)output;
+
+    if ((index >= BUZZER_OUTPUT_MAX_COUNT) || (timerOutput == NULL))
+    {
+        return false;
+    }
+
+    *timerOutput = timerOutputs[index];
+    return true;
+}
+
 void GBuzzerInit(void)
 {
     if (TimerInit() != HAL_OK)
@@ -10,31 +29,45 @@ void GBuzzerInit(void)
     }
 }
 
-void PlayFrequency(uint32_t frequencyHz)
+void PlayFrequency(BuzzerOutput output, uint32_t frequencyHz)
 {
-    if (frequencyHz == 0U)
+    TimerOutput timerOutput;
+
+    if (!GetTimerOutput(output, &timerOutput))
     {
-        StopBuzzer();
         return;
     }
 
-    if (TimerSetFrequency(TIMER_OUTPUT_BUZZER, frequencyHz) != HAL_OK)
+    if (frequencyHz == 0U)
+    {
+        StopBuzzer(output);
+        return;
+    }
+
+    if (TimerSetFrequency(timerOutput, frequencyHz) != HAL_OK)
     {
         G_LOG(ERROR, "Invalid buzzer frequency: %lu Hz.\r\n", (unsigned long)frequencyHz);
         return;
     }
 
-    if (TimerPwmStart(TIMER_OUTPUT_BUZZER) != HAL_OK)
+    if (TimerPwmStart(timerOutput) != HAL_OK)
     {
         G_LOG(ERROR, "Buzzer PWM start failed.\r\n");
     }
 }
 
-void StopBuzzer(void)
+void StopBuzzer(BuzzerOutput output)
 {
-    TimerSetDuty(TIMER_OUTPUT_BUZZER, 0.0f);
+    TimerOutput timerOutput;
 
-    if (TimerPwmStop(TIMER_OUTPUT_BUZZER) != HAL_OK)
+    if (!GetTimerOutput(output, &timerOutput))
+    {
+        return;
+    }
+
+    TimerSetDuty(timerOutput, 0.0f);
+
+    if (TimerPwmStop(timerOutput) != HAL_OK)
     {
         G_LOG(ERROR, "Buzzer PWM stop failed.\r\n");
     }

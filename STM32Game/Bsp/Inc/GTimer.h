@@ -5,7 +5,8 @@
 /* The timer/channel pairing stays private to prevent invalid combinations. */
 typedef enum
 {
-    TIMER_OUTPUT_BUZZER = 0,
+    TIMER_OUTPUT_BUZZER_SOUND = 0,
+    TIMER_OUTPUT_BUZZER_EFFECT_SOUND,
     TIMER_OUTPUT_MAX_COUNT
 } TimerOutput;
 

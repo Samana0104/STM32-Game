@@ -3,6 +3,14 @@
 #include "GBuzzer.h"
 #include "SoundResource.h"
 
+typedef struct
+{
+    const SoundSequence *sequence;
+    uint32_t stepIndex;
+    uint32_t nextStepTick;
+    bool playing;
+} SoundPlayerState;
+
 static const SoundSequence *const soundSequences[] =
 {
     &scaleSound,
@@ -14,37 +22,36 @@ static const SoundSequence *const soundSequences[] =
     &canonSound,
 };
 
-static const SoundSequence *currentSequence;
-static uint32_t currentStepIndex;
-static uint32_t nextStepTick;
-static bool soundPlaying;
+static SoundPlayerState bgmState;
+static SoundPlayerState effectState;
 
-static void StartCurrentStep(void)
+static void StartCurrentStep(SoundPlayerState *state, BuzzerOutput output)
 {
-    const SoundStep *step = &currentSequence->steps[currentStepIndex];
+    const SoundStep *step = &state->sequence->steps[state->stepIndex];
 
     if (step->note == SOUND_NOTE_REST)
     {
-        StopBuzzer();
+        StopBuzzer(output);
     }
     else
     {
-        PlayFrequency((uint32_t)step->note);
+        PlayFrequency(output, (uint32_t)step->note);
     }
 
-    nextStepTick = HAL_GetTick() + (uint32_t)step->delay;
+    state->nextStepTick = HAL_GetTick() + (uint32_t)step->delay;
 }
 
-void SoundPlayerInit(void)
+static void StopSound(SoundPlayerState *state, BuzzerOutput output)
 {
-    GBuzzerInit();
-    currentSequence = NULL;
-    currentStepIndex = 0U;
-    nextStepTick = 0U;
-    soundPlaying = false;
+    StopBuzzer(output);
+    state->sequence = NULL;
+    state->stepIndex = 0U;
+    state->nextStepTick = 0U;
+    state->playing = false;
 }
 
-void SoundPlayerPlay(SoundId soundId)
+static void PlaySound(SoundPlayerState *state, BuzzerOutput output,
+                      SoundId soundId)
 {
     const uint32_t index = (uint32_t)soundId;
 
@@ -53,46 +60,77 @@ void SoundPlayerPlay(SoundId soundId)
         return;
     }
 
-    SoundPlayerStop();
-    currentSequence = soundSequences[index];
-    currentStepIndex = 0U;
-    soundPlaying = true;
-    StartCurrentStep();
+    StopSound(state, output);
+    state->sequence = soundSequences[index];
+    state->stepIndex = 0U;
+    state->playing = true;
+    StartCurrentStep(state, output);
 }
 
-void SoundPlayerStop(void)
+static void UpdateSound(SoundPlayerState *state, BuzzerOutput output,
+                        uint32_t now)
 {
-    StopBuzzer();
-    currentSequence = NULL;
-    currentStepIndex = 0U;
-    nextStepTick = 0U;
-    soundPlaying = false;
-}
-
-void SoundPlayerUpdate(void)
-{
-    if (!soundPlaying || ((int32_t)(HAL_GetTick() - nextStepTick) < 0))
+    if (!state->playing || ((int32_t)(now - state->nextStepTick) < 0))
     {
         return;
     }
 
-    ++currentStepIndex;
+    ++state->stepIndex;
 
-    if (currentStepIndex >= currentSequence->stepCount)
+    if (state->stepIndex >= state->sequence->stepCount)
     {
-        if (!currentSequence->loop)
+        if (!state->sequence->loop)
         {
-            SoundPlayerStop();
+            StopSound(state, output);
             return;
         }
 
-        currentStepIndex = 0U;
+        state->stepIndex = 0U;
     }
 
-    StartCurrentStep();
+    StartCurrentStep(state, output);
 }
 
-bool SoundPlayerIsPlaying(void)
+void SoundPlayerInit(void)
 {
-    return soundPlaying;
+    GBuzzerInit();
+    StopSound(&bgmState, BUZZER_OUTPUT_SOUND);
+    StopSound(&effectState, BUZZER_OUTPUT_EFFECT_SOUND);
+}
+
+void SoundPlayerPlayBgm(SoundId soundId)
+{
+    PlaySound(&bgmState, BUZZER_OUTPUT_SOUND, soundId);
+}
+
+void SoundPlayerPlayEffect(SoundId soundId)
+{
+    PlaySound(&effectState, BUZZER_OUTPUT_EFFECT_SOUND, soundId);
+}
+
+void SoundPlayerStopBgm(void)
+{
+    StopSound(&bgmState, BUZZER_OUTPUT_SOUND);
+}
+
+void SoundPlayerStopEffect(void)
+{
+    StopSound(&effectState, BUZZER_OUTPUT_EFFECT_SOUND);
+}
+
+void SoundPlayerUpdate(void)
+{
+    const uint32_t now = HAL_GetTick();
+    UpdateSound(&bgmState, BUZZER_OUTPUT_SOUND, now);
+    UpdateSound(&effectState, BUZZER_OUTPUT_EFFECT_SOUND, now);
+}
+
+bool SoundPlayerIsBgmPlaying(void)
+{
+    return bgmState.playing;
+}
+
+bool SoundPlayerIsEffectPlaying(void)
+{
+    return effectState.playing;
 }

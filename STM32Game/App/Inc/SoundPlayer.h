@@ -49,7 +49,10 @@ typedef enum
 } SoundId;
 
 void SoundPlayerInit(void);
-void SoundPlayerPlay(SoundId soundId);
-void SoundPlayerStop(void);
+void SoundPlayerPlayBgm(SoundId soundId);
+void SoundPlayerPlayEffect(SoundId soundId);
+void SoundPlayerStopBgm(void);
+void SoundPlayerStopEffect(void);
 void SoundPlayerUpdate(void);
-bool SoundPlayerIsPlaying(void);
+bool SoundPlayerIsBgmPlaying(void);
+bool SoundPlayerIsEffectPlaying(void);

@@ -80,7 +80,7 @@ int GameMain(void)
     GameInit();
     G_LOG(INFO, "Game started successfully.\r\n");
 
-    SoundPlayerPlay(SOUND_ID_TITLE_BGM);
+    SoundPlayerPlayBgm(SOUND_ID_TITLE_BGM);
     while (1)
     {
         GameUpdate();

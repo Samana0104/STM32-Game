@@ -10,6 +10,7 @@ typedef struct
 static const TimerOutputConfig timerOutputConfigs[] = 
 {
     {&htim2, TIM_CHANNEL_1},
+    {&htim5, TIM_CHANNEL_2},
 };
 
 static const TimerOutputConfig *TimerGetConfig(TimerOutput output)
@@ -54,8 +55,9 @@ static uint32_t TimerGetInputClock(const TIM_TypeDef *instance)
 
 HAL_StatusTypeDef TimerInit(void)
 {
-    TimerSetDuty(TIMER_OUTPUT_BUZZER, 0.0f);
-    return TimerPwmStart(TIMER_OUTPUT_BUZZER);
+    TimerSetDuty(TIMER_OUTPUT_BUZZER_SOUND, 0.0f);
+    TimerSetDuty(TIMER_OUTPUT_BUZZER_EFFECT_SOUND, 0.0f);
+    return HAL_OK;
 }
 
 HAL_StatusTypeDef TimerPwmStart(TimerOutput output)
@@ -65,6 +67,12 @@ HAL_StatusTypeDef TimerPwmStart(TimerOutput output)
     if (config == NULL)
     {
         return HAL_ERROR;
+    }
+
+    if (TIM_CHANNEL_STATE_GET(config->htim, config->channel) ==
+        HAL_TIM_CHANNEL_STATE_BUSY)
+    {
+        return HAL_OK;
     }
 
     return HAL_TIM_PWM_Start(config->htim, config->channel);
@@ -77,6 +85,12 @@ HAL_StatusTypeDef TimerPwmStop(TimerOutput output)
     if (config == NULL)
     {
         return HAL_ERROR;
+    }
+
+    if (TIM_CHANNEL_STATE_GET(config->htim, config->channel) ==
+        HAL_TIM_CHANNEL_STATE_READY)
+    {
+        return HAL_OK;
     }
 
     return HAL_TIM_PWM_Stop(config->htim, config->channel);
