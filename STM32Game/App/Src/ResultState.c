@@ -1,38 +1,57 @@
 #include "ResultState.h"
 
+#include "GameLcd.h"
+#include "GameRecord.h"
 #include "GameState.h"
 #include "GCheat.h"
 #include "GJoystick.h"
 #include "InGameState.h"
-#include "GLcd1602.h"
+
+#define GAME_OVER_DISPLAY_MS 2000U
 
 static bool isActive;
+static bool isRecordVisible;
+static uint32_t gameOverStartTick;
 
 void ResultStateEnter(void)
 {
     isActive = true;
+    isRecordVisible = false;
+    gameOverStartTick = HAL_GetTick();
 
-    if (Lcd1602IsReady())
-    {
-        Lcd1602Printf("Score:%lu\nUP:RST DN:EXIT",
-                      (unsigned long)InGameStateGetScore());
-    }
+    GameRecordSave(InGameStateGetScore(), InGameStateGetMissCount());
+    GameLcdShowGameOver();
 
     G_LOG(INFO, "ResultState entered. \r\n");
 }
 
 void ResultStateUpdate(void)
 {
-    if (!isActive || !WasJoystickMoved())
+    if (!isActive)
     {
         return;
     }
 
-    if (GetJoystickDirection() == JOYSTICK_UP)
+    if (!isRecordVisible)
+    {
+        if ((HAL_GetTick() - gameOverStartTick) < GAME_OVER_DISPLAY_MS)
+        {
+            return;
+        }
+
+        isRecordVisible = true;
+        GameLcdShowRecord(GameRecordGetBestScore(),
+                          GameRecordGetLastMissCount());
+        return;
+    }
+
+    if (WasJoystickMoved()
+        && GetJoystickDirection() == JOYSTICK_UP)
     {
         GameStateChange(GAME_STATE_PLAYING);
     }
-    else if (GetJoystickDirection() == JOYSTICK_DOWN)
+    else if (WasJoystickMoved()
+        && GetJoystickDirection() == JOYSTICK_DOWN)
     {
         GameStateChange(GAME_STATE_TITLE);
     }

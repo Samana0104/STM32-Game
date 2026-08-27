@@ -3,6 +3,7 @@
 #include "GButton.h"
 #include "GCheat.h"
 #include "GFnd.h"
+#include "GameRecord.h"
 #include "GJoystick.h"
 #include "GLed.h"
 #include "GUsart.h"
@@ -20,6 +21,7 @@ static void GameInit(void)
     GJoystickInit();
     UartInit();
     FndInit();
+    GameRecordInit();
 
     SetFndSingleDigit(INITIAL_STAGE);
     SetFnd4DigitNumber(0U);
