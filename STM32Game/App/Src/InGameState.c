@@ -1,5 +1,6 @@
 #include "InGameState.h"
 #include "GameLcd.h"
+#include "GameStageConfig.h"
 #include "GButton.h"
 #include "GCheat.h"
 #include "GFnd.h"
@@ -7,27 +8,52 @@
 #include "ReadyState.h"
 
 #define MOLE_COUNT             ((uint8_t)LED_MAX)
-#define GAME_DURATION_MS       30000U
-#define MOLE_VISIBLE_MS        800U
-#define NO_ACTIVE_MOLE         MOLE_COUNT
 
 static bool isActive;
 static bool isFinished;
-static uint8_t currentMole = NO_ACTIVE_MOLE;
+static uint8_t activeMoles;
 static uint32_t startTick;
 static uint32_t moleStartTick;
 static uint32_t score;
 static uint32_t combo;
 static uint32_t missCount;
 static uint32_t randomState;
+static const GameStageConfig *stageConfig;
 
-static void TurnOffCurrentMole(void)
+static uint8_t GetMoleMask(uint8_t moleId)
 {
-    if (currentMole < MOLE_COUNT)
+    return (uint8_t)(1U << moleId);
+}
+
+static uint8_t CountActiveMoles(void)
+{
+    uint8_t moleId;
+    uint8_t count = 0U;
+
+    for (moleId = 0U; moleId < MOLE_COUNT; moleId++)
     {
-        SetLedState((LedId)currentMole, LED_OFF);
-        currentMole = NO_ACTIVE_MOLE;
+        if ((activeMoles & GetMoleMask(moleId)) != 0U)
+        {
+            count++;
+        }
     }
+
+    return count;
+}
+
+static void TurnOffAllMoles(void)
+{
+    uint8_t moleId;
+
+    for (moleId = 0U; moleId < MOLE_COUNT; moleId++)
+    {
+        if ((activeMoles & GetMoleMask(moleId)) != 0U)
+        {
+            SetLedState((LedId)moleId, LED_OFF);
+        }
+    }
+
+    activeMoles = 0U;
 }
 
 static uint32_t NextRandom(void)
@@ -36,38 +62,61 @@ static uint32_t NextRandom(void)
     return randomState;
 }
 
-static void SpawnMole(uint32_t currentTick)
+static void SpawnMoles(uint32_t currentTick)
 {
-    uint8_t previousMole = currentMole;
-    uint8_t nextMole;
+    uint8_t moleIds[MOLE_COUNT];
+    uint8_t moleCount = stageConfig->activeMoleCount;
+    uint8_t index;
 
-    TurnOffCurrentMole();
-    nextMole = (uint8_t)(NextRandom() % MOLE_COUNT);
+    TurnOffAllMoles();
 
-    if (nextMole == previousMole)
+    if (moleCount == 0U)
     {
-        nextMole = (uint8_t)((nextMole + 1U) % MOLE_COUNT);
+        moleCount = 1U;
+    }
+    else if (moleCount > MOLE_COUNT)
+    {
+        moleCount = MOLE_COUNT;
     }
 
-    currentMole = nextMole;
+    for (index = 0U; index < MOLE_COUNT; index++)
+    {
+        moleIds[index] = index;
+    }
+
+    for (index = 0U; index < moleCount; index++)
+    {
+        uint8_t selectedIndex;
+        uint8_t selectedMole;
+
+        selectedIndex = (uint8_t)(index
+            + (NextRandom() % (uint32_t)(MOLE_COUNT - index)));
+        selectedMole = moleIds[selectedIndex];
+        moleIds[selectedIndex] = moleIds[index];
+        moleIds[index] = selectedMole;
+
+        activeMoles |= GetMoleMask(selectedMole);
+        SetLedState((LedId)selectedMole, LED_ON);
+    }
+
     moleStartTick = currentTick;
-    SetLedState((LedId)currentMole, LED_ON);
 }
 
 static bool IsGameTimeOver(uint32_t currentTick)
 {
-    return (currentTick - startTick) >= GAME_DURATION_MS;
+    return (currentTick - startTick) >= stageConfig->durationMs;
 }
 
 void InGameStateEnter(void)
 {
+    stageConfig = GameStageGetConfig(ReadyStateGetStage());
     startTick = HAL_GetTick();
     moleStartTick = startTick;
     score = 0U;
     combo = 0U;
     missCount = 0U;
     randomState = startTick ^ 0xA5A5A5A5U;
-    currentMole = NO_ACTIVE_MOLE;
+    activeMoles = 0U;
     isFinished = false;
     isActive = true;
 
@@ -76,13 +125,15 @@ void InGameStateEnter(void)
 
     GameLcdShowCombo(combo);
 
-    SpawnMole(startTick);
+    SpawnMoles(startTick);
     G_LOG(INFO, "InGameState entered.\r\n");
 }
 
 void InGameStateUpdate(void)
 {
     uint32_t currentTick;
+    uint8_t moleId;
+    uint8_t hitCount = 0U;
 
     if (!isActive)
     {
@@ -93,26 +144,42 @@ void InGameStateUpdate(void)
 
     if (IsGameTimeOver(currentTick))
     {
-        TurnOffCurrentMole();
+        TurnOffAllMoles();
         isFinished = true;
         return;
     }
 
-    if (currentMole < MOLE_COUNT
-        && WasButtonPressed((ButtonId)currentMole))
+    for (moleId = 0U; moleId < MOLE_COUNT; moleId++)
     {
-        score++;
-        combo++;
+        uint8_t moleMask = GetMoleMask(moleId);
+
+        if (((activeMoles & moleMask) != 0U)
+            && WasButtonPressed((ButtonId)moleId))
+        {
+            SetLedState((LedId)moleId, LED_OFF);
+            activeMoles &= (uint8_t)(~moleMask);
+            hitCount++;
+        }
+    }
+
+    if (hitCount > 0U)
+    {
+        score += hitCount;
+        combo += hitCount;
         SetFnd4DigitNumber((uint16_t)score);
         GameLcdShowCombo(combo);
-        SpawnMole(currentTick);
+
+        if (activeMoles == 0U)
+        {
+            SpawnMoles(currentTick);
+        }
     }
-    else if ((currentTick - moleStartTick) >= MOLE_VISIBLE_MS)
+    else if ((currentTick - moleStartTick) >= stageConfig->moleVisibleMs)
     {
-        missCount++;
+        missCount += CountActiveMoles();
         combo = 0U;
         GameLcdShowMiss();
-        SpawnMole(currentTick);
+        SpawnMoles(currentTick);
     }
 }
 
@@ -123,7 +190,7 @@ void InGameStateExit(void)
         return;
     }
 
-    TurnOffCurrentMole();
+    TurnOffAllMoles();
     isActive = false;
     G_LOG(INFO, "InGameState exited.\r\n");
 }
