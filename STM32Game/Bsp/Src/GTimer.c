@@ -1,4 +1,5 @@
 #include "GTimer.h"
+#include "GCheat.h"
 #include "tim.h"
 
 typedef struct
@@ -40,8 +41,7 @@ static uint32_t TimerGetInputClock(const TIM_TypeDef *instance)
 
     HAL_RCC_GetClockConfig(&clocks, &flashLatency);
 
-    if ((instance == TIM1) || (instance == TIM9) ||
-        (instance == TIM10) || (instance == TIM11))
+    if ((instance == TIM1) || (instance == TIM9) || (instance == TIM10) || (instance == TIM11))
     {
         uint32_t clock = HAL_RCC_GetPCLK2Freq();
         return (clocks.APB2CLKDivider == RCC_HCLK_DIV1) ? clock : clock * 2U;
@@ -53,11 +53,21 @@ static uint32_t TimerGetInputClock(const TIM_TypeDef *instance)
     }
 }
 
-HAL_StatusTypeDef TimerInit(void)
+void TimerInit(void)
 {
-    TimerSetDuty(TIMER_OUTPUT_BUZZER_SOUND, 0.0f);
-    TimerSetDuty(TIMER_OUTPUT_BUZZER_EFFECT_SOUND, 0.0f);
-    return HAL_OK;
+    for (uint32_t i = 0U; i < TIMER_OUTPUT_MAX_COUNT; ++i)
+    {
+        TimerOutput output = (TimerOutput)i;
+
+        if (TimerGetConfig(output) == NULL)
+        {
+            G_LOG(DANGER, "Timer output %lu initialization failed.\r\n",
+                  (unsigned long)i);
+            continue;
+        }
+
+        TimerSetDuty(output, 0.0f);
+    }
 }
 
 HAL_StatusTypeDef TimerPwmStart(TimerOutput output)

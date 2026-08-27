@@ -93,7 +93,6 @@ static void UpdateSound(SoundPlayerState *state, BuzzerOutput output,
 
 void SoundPlayerInit(void)
 {
-    GBuzzerInit();
     StopSound(&bgmState, BUZZER_OUTPUT_SOUND);
     StopSound(&effectState, BUZZER_OUTPUT_EFFECT_SOUND);
 }

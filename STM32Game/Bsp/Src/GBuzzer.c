@@ -21,14 +21,6 @@ static bool GetTimerOutput(BuzzerOutput output, TimerOutput *timerOutput)
     return true;
 }
 
-void GBuzzerInit(void)
-{
-    if (TimerInit() != HAL_OK)
-    {
-        G_LOG(ERROR, "Buzzer timer initialization failed.\r\n");
-    }
-}
-
 void PlayFrequency(BuzzerOutput output, uint32_t frequencyHz)
 {
     TimerOutput timerOutput;

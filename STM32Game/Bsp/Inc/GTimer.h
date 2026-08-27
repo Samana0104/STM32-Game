@@ -10,7 +10,7 @@ typedef enum
     TIMER_OUTPUT_MAX_COUNT
 } TimerOutput;
 
-HAL_StatusTypeDef TimerInit(void);
+void TimerInit(void);
 HAL_StatusTypeDef TimerPwmStart(TimerOutput output);
 HAL_StatusTypeDef TimerPwmStop(TimerOutput output);
 

@@ -6,6 +6,7 @@
 #include "GameRecord.h"
 #include "GJoystick.h"
 #include "GLed.h"
+#include "GTimer.h"
 #include "GUsart.h"
 #include "InGameState.h"
 #include "GLcd1602.h"
@@ -24,6 +25,8 @@ static void GameInit(void)
     GledInit();
     GButtonInit();
     GJoystickInit();
+
+    TimerInit();
     SoundPlayerInit();
     UartInit();
     FndInit();
