@@ -8,9 +8,9 @@
 #include "GLed.h"
 #include "GUsart.h"
 #include "InGameState.h"
+#include "GBuzzer.h"
 #include "GLcd1602.h"
 #include "ReadyState.h"
-
 #include "stm32f4xx_hal.h"
 
 #define INITIAL_STAGE 1U
@@ -20,6 +20,7 @@ static void GameInit(void)
     GledInit();
     GButtonInit();
     GJoystickInit();
+    GBuzzerInit();
     UartInit();
     FndInit();
     GameRecordInit();
@@ -62,8 +63,7 @@ static void GameUpdate(void)
 
     GameStateUpdate();
 
-    if (GameStateGet() == GAME_STATE_PLAYING
-        && InGameStateIsFinished())
+    if (GameStateGet() == GAME_STATE_PLAYING && InGameStateIsFinished())
     {
         FinishCurrentStage();
     }
