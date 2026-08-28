@@ -1,0 +1,34 @@
+#include "SoundResource.h"
+
+/* 점수 확인 화면에 어울리는 밝고 여유 있는 결과 BGM. */
+static const SoundStep steps[] =
+{
+    {SOUND_NOTE_DO,      SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_MI,      SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_SOL,     SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_HIGH_DO, SOUND_DELAY_LONG},
+
+    {SOUND_NOTE_SI,      SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_SOL,     SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_MI,      SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_SOL,     SOUND_DELAY_LONG},
+
+    {SOUND_NOTE_FA,      SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_LA,      SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_HIGH_DO, SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_HIGH_MI, SOUND_DELAY_LONG},
+
+    {SOUND_NOTE_HIGH_RE, SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_SI,      SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_SOL,     SOUND_DELAY_NORMAL},
+    {SOUND_NOTE_HIGH_DO, SOUND_DELAY_LONG},
+
+    {SOUND_NOTE_REST,    SOUND_DELAY_NORMAL},
+};
+
+const SoundSequence resultBgm =
+{
+    steps,
+    SOUND_STEP_COUNT(steps),
+    true,
+};
