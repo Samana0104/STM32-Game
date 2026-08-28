@@ -68,8 +68,7 @@ static void UpdateTitleMenu(void)
         else
         {
             currentScreen = TITLE_SCREEN_RECORD;
-            GameLcdShowRecord(GameRecordGetBestScore(),
-                              GameRecordGetLastMissCount());
+            GameLcdShowRecord(GameRecordGetBestScore());
             SoundPlayerPlayEffect(SOUND_ID_BUTTON);
         }
     }

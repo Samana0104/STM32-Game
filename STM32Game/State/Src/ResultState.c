@@ -21,7 +21,7 @@ void ResultStateEnter(void)
     isRecordVisible = false;
     gameOverStartTick = HAL_GetTick();
 
-    GameRecordSave(InGameStateGetScore(), InGameStateGetMissCount());
+    GameRecordSave(InGameStateGetScore());
     GameLcdShowGameOver();
 
     if (InGameStateGetLife() == 0U)

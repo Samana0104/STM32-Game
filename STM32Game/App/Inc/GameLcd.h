@@ -23,4 +23,4 @@ void GameLcdShowGameOver(void);
 void GameLcdShowResult(uint32_t score, uint32_t missCount);
 
 /* 최고 점수와 최근 게임의 미스 횟수를 표시한다. */
-void GameLcdShowRecord(uint32_t bestRecord, uint32_t missCount);
+void GameLcdShowRecord(uint32_t bestRecord);

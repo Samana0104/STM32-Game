@@ -2,11 +2,13 @@
 
 #include "main.h"
 
-/* 전원이 유지되는 동안 사용할 게임 기록을 초기화한다. */
+#define GAME_RECORD_MAX_COUNT 100U
+
+/* Flash에서 내림차순 점수 기록을 불러온다. */
 void GameRecordInit(void);
 
-/* 한 게임의 결과를 최고 기록과 최근 미스 횟수에 반영한다. */
-void GameRecordSave(uint32_t score, uint32_t missCount);
+/* 점수가 100위 안에 들면 삽입하고 Flash에 저장한다. */
+bool GameRecordSave(uint32_t score);
 
 uint32_t GameRecordGetBestScore(void);
-uint32_t GameRecordGetLastMissCount(void);
+uint32_t GameRecordGetScore(uint32_t rank);

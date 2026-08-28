@@ -98,9 +98,8 @@ void GameLcdShowResult(uint32_t score, uint32_t missCount)
                   (unsigned long)ClampRecordValue(missCount));
 }
 
-void GameLcdShowRecord(uint32_t bestRecord, uint32_t missCount)
+void GameLcdShowRecord(uint32_t bestRecord)
 {
-    Lcd1602Printf("Best Score:%lu\nMiss Count:%lu",
-                  (unsigned long)ClampRecordValue(bestRecord),
-                  (unsigned long)ClampRecordValue(missCount));
+    Lcd1602Printf("Best Score:%lu",
+                  (unsigned long)ClampRecordValue(bestRecord));
 }

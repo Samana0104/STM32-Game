@@ -38,6 +38,7 @@ extern "C" {
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
