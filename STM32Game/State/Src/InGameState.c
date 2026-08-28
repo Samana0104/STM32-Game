@@ -1,19 +1,23 @@
 #include "InGameState.h"
 #include "GameLcd.h"
+#include "GameScore.h"
 #include "GameStageConfig.h"
 #include "GButton.h"
 #include "GCheat.h"
 #include "GFnd.h"
 #include "GLed.h"
 #include "ReadyState.h"
+#include "SoundPlayer.h"
 
-#define MOLE_COUNT             ((uint8_t)LED_MAX)
+#define MOLE_COUNT ((uint8_t)LED_MAX)
 
 static bool isActive;
 static bool isFinished;
 static uint8_t activeMoles;
+static uint8_t life;
 static uint32_t startTick;
 static uint32_t moleStartTick;
+static uint32_t moleVisibleDurationMs;
 static uint32_t score;
 static uint32_t combo;
 static uint32_t missCount;
@@ -62,22 +66,53 @@ static uint32_t NextRandom(void)
     return randomState;
 }
 
+static uint32_t GetNextMoleVisibleDuration(void)
+{
+    uint32_t minimum = stageConfig->moleVisibleMinMs;
+    uint32_t maximum = stageConfig->moleVisibleMaxMs;
+
+    if (maximum <= minimum)
+    {
+        return minimum;
+    }
+
+    return minimum + (NextRandom() % (maximum - minimum + 1U));
+}
+
+static void AddScore(uint32_t points)
+{
+    if (points >= (GAME_SCORE_MAX - score))
+    {
+        score = GAME_SCORE_MAX;
+        return;
+    }
+    score += points;
+}
+
+static void SubtractScore(uint32_t penalty)
+{
+    score = penalty >= score ? 0U : score - penalty;
+}
+
 static void SpawnMoles(uint32_t currentTick)
 {
     uint8_t moleIds[MOLE_COUNT];
-    uint8_t moleCount = stageConfig->activeMoleCount;
+    uint8_t maxMoleCount = stageConfig->maxActiveMoleCount;
+    uint8_t moleCount;
     uint8_t index;
 
     TurnOffAllMoles();
 
-    if (moleCount == 0U)
+    if (maxMoleCount == 0U)
     {
-        moleCount = 1U;
+        maxMoleCount = 1U;
     }
-    else if (moleCount > MOLE_COUNT)
+    else if (maxMoleCount > MOLE_COUNT)
     {
-        moleCount = MOLE_COUNT;
+        maxMoleCount = MOLE_COUNT;
     }
+
+    moleCount = (uint8_t)(1U + (NextRandom() % maxMoleCount));
 
     for (index = 0U; index < MOLE_COUNT; index++)
     {
@@ -100,6 +135,7 @@ static void SpawnMoles(uint32_t currentTick)
     }
 
     moleStartTick = currentTick;
+    moleVisibleDurationMs = GetNextMoleVisibleDuration();
 }
 
 static bool IsGameTimeOver(uint32_t currentTick)
@@ -112,6 +148,7 @@ void InGameStateEnter(void)
     GameStage currentStage = ReadyStateGetStage();
 
     stageConfig = GameStageGetConfig(currentStage);
+    life = stageConfig->initialLife;
     startTick = HAL_GetTick();
     moleStartTick = startTick;
 
@@ -130,7 +167,7 @@ void InGameStateEnter(void)
     SetFndSingleDigit((uint8_t)currentStage);
     SetFnd4DigitNumber((uint16_t)score);
 
-    GameLcdShowCombo(combo);
+    GameLcdShowCombo(combo, life, GAME_COMBO_RANK_NONE, 0U);
 
     SpawnMoles(startTick);
     G_LOG(INFO, "InGameState entered.\r\n");
@@ -139,8 +176,11 @@ void InGameStateEnter(void)
 void InGameStateUpdate(void)
 {
     uint32_t currentTick;
+    uint32_t awardedScore = 0U;
+    uint32_t announcedScore = 0U;
     uint8_t moleId;
     uint8_t hitCount = 0U;
+    GameComboRank announcedRank = GAME_COMBO_RANK_NONE;
 
     if (!isActive)
     {
@@ -165,27 +205,48 @@ void InGameStateUpdate(void)
         {
             SetLedState((LedId)moleId, LED_OFF);
             activeMoles &= (uint8_t)(~moleMask);
+            combo++;
+            awardedScore = GameScoreGetHitPoints(combo);
+            AddScore(awardedScore);
+            if ((combo % 10U) == 0U)
+            {
+                announcedRank = GameScoreGetComboRank(combo);
+                announcedScore = awardedScore;
+            }
             hitCount++;
         }
     }
 
     if (hitCount > 0U)
     {
-        score += hitCount;
-        combo += hitCount;
         SetFnd4DigitNumber((uint16_t)score);
-        GameLcdShowCombo(combo);
+        GameLcdShowCombo(combo, life, announcedRank, announcedScore);
+        SoundPlayerPlayEffect(SOUND_ID_SUCCESS);
 
         if (activeMoles == 0U)
         {
             SpawnMoles(currentTick);
         }
     }
-    else if ((currentTick - moleStartTick) >= stageConfig->moleVisibleMs)
+    else if ((currentTick - moleStartTick) >= moleVisibleDurationMs)
     {
-        missCount += CountActiveMoles();
+        uint8_t missedMoles = CountActiveMoles();
+        uint32_t scorePenalty = (uint32_t)missedMoles * GAME_MISS_PENALTY;
+
+        missCount += missedMoles;
+        life = missedMoles >= life ? 0U : (uint8_t)(life - missedMoles);
+        SubtractScore(scorePenalty);
         combo = 0U;
-        GameLcdShowMiss();
+        SetFnd4DigitNumber((uint16_t)score);
+        GameLcdShowMiss(life, scorePenalty);
+        SoundPlayerPlayEffect(SOUND_ID_FAIL);
+
+        if (life == 0U)
+        {
+            TurnOffAllMoles();
+            isFinished = true;
+            return;
+        }
         SpawnMoles(currentTick);
     }
 }
@@ -225,4 +286,9 @@ uint32_t InGameStateGetCombo(void)
 uint32_t InGameStateGetMissCount(void)
 {
     return missCount;
+}
+
+uint8_t InGameStateGetLife(void)
+{
+    return life;
 }

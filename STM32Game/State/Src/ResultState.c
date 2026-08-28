@@ -7,6 +7,7 @@
 #include "GJoystick.h"
 #include "InGameState.h"
 #include "ReadyState.h"
+#include "SoundPlayer.h"
 
 #define GAME_OVER_DISPLAY_MS 2000U
 
@@ -22,6 +23,15 @@ void ResultStateEnter(void)
 
     GameRecordSave(InGameStateGetScore(), InGameStateGetMissCount());
     GameLcdShowGameOver();
+
+    if (InGameStateGetLife() == 0U)
+    {
+        SoundPlayerPlayEffect(SOUND_ID_FAIL);
+    }
+    else
+    {
+        SoundPlayerPlayBgm(SOUND_ID_CANON);
+    }
 
     G_LOG(INFO, "ResultState entered. \r\n");
 }
@@ -41,8 +51,8 @@ void ResultStateUpdate(void)
         }
 
         isRecordVisible = true;
-        GameLcdShowRecord(GameRecordGetBestScore(),
-                          GameRecordGetLastMissCount());
+        GameLcdShowResult(InGameStateGetScore(),
+                          InGameStateGetMissCount());
         return;
     }
 
@@ -67,6 +77,8 @@ void ResultStateExit(void)
     }
 
     isActive = false;
+    SoundPlayerStopBgm();
+    SoundPlayerStopEffect();
     G_LOG(INFO, "ResultState exited. \r\n");
 }
 

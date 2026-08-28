@@ -4,6 +4,7 @@
 #include "GameState.h"
 #include "GCheat.h"
 #include "GFnd.h"
+#include "SoundPlayer.h"
 
 #define COUNTDOWN_STEP_MS    1000U
 #define COUNTDOWN_STEP_COUNT 4U
@@ -44,6 +45,7 @@ void ReadyStateEnter(void)
 
     SetFndSingleDigit((uint8_t)currentStage);
     GameLcdShowCountdown((uint8_t)currentStage, countdownText[currentStep]);
+    SoundPlayerPlayEffect(SOUND_ID_BUTTON);
     G_LOG(INFO, "ReadyState entered.\r\n");
 }
 
@@ -71,6 +73,9 @@ void ReadyStateUpdate(void)
         currentStep = nextStep;
         GameLcdShowCountdown((uint8_t)currentStage,
                              countdownText[currentStep]);
+        SoundPlayerPlayEffect(currentStep == (COUNTDOWN_STEP_COUNT - 1U)
+                                  ? SOUND_ID_START
+                                  : SOUND_ID_BUTTON);
     }
 }
 

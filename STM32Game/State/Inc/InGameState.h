@@ -25,3 +25,6 @@ uint32_t InGameStateGetCombo(void);
 
 /* 현재 게임에서 두더지를 놓친 횟수를 반환한다. */
 uint32_t InGameStateGetMissCount(void);
+
+/* 현재 스테이지의 남은 Life를 반환한다. */
+uint8_t InGameStateGetLife(void);

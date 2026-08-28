@@ -69,7 +69,14 @@ static void GameUpdate(void)
 
     if (GameStateGet() == GAME_STATE_PLAYING && InGameStateIsFinished())
     {
-        FinishCurrentStage();
+        if (InGameStateGetLife() == 0U)
+        {
+            GameStateChange(GAME_STATE_RESULT);
+        }
+        else
+        {
+            FinishCurrentStage();
+        }
     }
 
 #ifndef NDEBUG
@@ -83,7 +90,6 @@ int GameMain(void)
     GameInit();
     G_LOG(INFO, "Game started successfully.\r\n");
 
-    SoundPlayerPlayBgm(SOUND_ID_TITLE_BGM);
     while (1)
     {
         GameUpdate();

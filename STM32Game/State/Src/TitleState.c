@@ -6,6 +6,7 @@
 #include "GCheat.h"
 #include "GJoystick.h"
 #include "ReadyState.h"
+#include "SoundPlayer.h"
 
 typedef enum
 {
@@ -45,6 +46,7 @@ static void UpdateTitleMenu(void)
         {
             selectedMenuItem = TITLE_MENU_GAME_START;
             PrintTitleMenu();
+            SoundPlayerPlayEffect(SOUND_ID_BUTTON);
         }
     }
     else if (direction == JOYSTICK_RIGHT)
@@ -53,6 +55,7 @@ static void UpdateTitleMenu(void)
         {
             selectedMenuItem = TITLE_MENU_RECORD;
             PrintTitleMenu();
+            SoundPlayerPlayEffect(SOUND_ID_BUTTON);
         }
     }
     else if (direction == JOYSTICK_UP)
@@ -67,6 +70,7 @@ static void UpdateTitleMenu(void)
             currentScreen = TITLE_SCREEN_RECORD;
             GameLcdShowRecord(GameRecordGetBestScore(),
                               GameRecordGetLastMissCount());
+            SoundPlayerPlayEffect(SOUND_ID_BUTTON);
         }
     }
 }
@@ -78,6 +82,7 @@ static void UpdateRecordScreen(void)
     {
         currentScreen = TITLE_SCREEN_MENU;
         PrintTitleMenu();
+        SoundPlayerPlayEffect(SOUND_ID_BUTTON);
     }
 }
 
@@ -86,6 +91,7 @@ void TitleStateEnter(void)
     isActive = true;
     currentScreen = TITLE_SCREEN_MENU;
     selectedMenuItem = TITLE_MENU_GAME_START;
+    SoundPlayerPlayBgm(SOUND_ID_TITLE_BGM);
     PrintTitleMenu();
     G_LOG(INFO, "TitleState entered. \r\n");
 }
@@ -120,6 +126,7 @@ void TitleStateExit(void)
     }
 
     isActive = false;
+    SoundPlayerStopBgm();
     G_LOG(INFO, "TitleState exited. \r\n");
 }
 
