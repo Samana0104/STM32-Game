@@ -5,7 +5,7 @@
 #define LCD1602_COLUMNS 16U
 #define LCD1602_ROWS     2U
 
-bool Lcd1602Init(void);
+void Lcd1602Init(void);
 void Lcd1602Update(void);
 bool Lcd1602IsReady(void);
 void Lcd1602Clear(void);

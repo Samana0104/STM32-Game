@@ -35,10 +35,7 @@ static void GameInit(void)
     SetFndSingleDigit(INITIAL_STAGE);
     SetFnd4DigitNumber(0U);
 
-    if (!Lcd1602Init())
-    {
-        G_LOG(ERROR, "LCD initialization failed.\r\n");
-    }
+    Lcd1602Init();
 
     /* TitleState가 LCD 메뉴 출력과 조이스틱 선택을 담당한다. */
     GameStateInit(GAME_STATE_TITLE);

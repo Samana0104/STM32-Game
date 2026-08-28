@@ -3,38 +3,80 @@
 #include "stm32f4xx_hal.h"
 
 /* PCF8574T address range is 0x20-0x27. Change this if A0-A2 differ. */
-#define LCD_I2C_ADDRESS_MIN   0x20U
-#define LCD_I2C_ADDRESS_MAX   0x27U
-#define LCD_SCL_PORT          GPIOB
-#define LCD_SCL_PIN           GPIO_PIN_8
-#define LCD_SDA_PORT          GPIOB
-#define LCD_SDA_PIN           GPIO_PIN_9
+#define LCD_I2C_ADDRESS_MIN 0x20U
+#define LCD_I2C_ADDRESS_MAX 0x27U
+#define LCD_SCL_PORT        GPIOB
+#define LCD_SCL_PIN         GPIO_PIN_8
+#define LCD_SDA_PORT        GPIOB
+#define LCD_SDA_PIN         GPIO_PIN_9
 
 /* Common PCF8574 LCD backpack mapping: P0=RS, P1=RW, P2=E, P3=BL. */
-#define LCD_RS                0x01U
-#define LCD_RW                0x02U
-#define LCD_ENABLE            0x04U
-#define LCD_BACKLIGHT         0x08U
+#define LCD_RS        0x01U
+#define LCD_RW        0x02U
+#define LCD_ENABLE    0x04U
+#define LCD_BACKLIGHT 0x08U
 
 #define LCD_HEALTH_INTERVAL_MS    100U
 #define LCD_RECONNECT_INTERVAL_MS 500U
-#define LCD_HEALTH_MASK            (LCD_RW | LCD_ENABLE | LCD_BACKLIGHT)
+#define LCD_POWER_UP_DELAY_MS      50U
 
-#define LCD_COMMAND_CLEAR     0x01U
-#define LCD_COMMAND_HOME      0x02U
-#define LCD_COMMAND_ENTRY     0x06U
-#define LCD_COMMAND_DISPLAY   0x0CU
-#define LCD_COMMAND_FUNCTION  0x28U
-#define LCD_COMMAND_DDRAM     0x80U
+#define LCD_COMMAND_CLEAR    0x01U
+#define LCD_COMMAND_ENTRY    0x06U
+#define LCD_COMMAND_DISPLAY  0x0CU
+#define LCD_COMMAND_FUNCTION 0x28U
+#define LCD_COMMAND_DDRAM    0x80U
+
+typedef enum
+{
+    LCD_STATE_OFFLINE_WAIT = 0,
+    LCD_STATE_SCANNING,
+    LCD_STATE_INITIALIZING,
+    LCD_STATE_READY
+} LcdState;
+
+typedef enum
+{
+    LCD_INIT_NIBBLE = 0,
+    LCD_INIT_COMMAND
+} LcdInitOperation;
+
+typedef struct
+{
+    LcdInitOperation operation;
+    uint8_t value;
+    uint8_t delayAfterMs;
+} LcdInitStep;
+
+static const LcdInitStep lcdInitSteps[] =
+{
+    { LCD_INIT_NIBBLE,  0x03U,                5U },
+    { LCD_INIT_NIBBLE,  0x03U,                1U },
+    { LCD_INIT_NIBBLE,  0x03U,                1U },
+    { LCD_INIT_NIBBLE,  0x02U,                1U },
+    { LCD_INIT_COMMAND, LCD_COMMAND_FUNCTION, 1U },
+    { LCD_INIT_COMMAND, LCD_COMMAND_DISPLAY,  1U },
+    { LCD_INIT_COMMAND, LCD_COMMAND_CLEAR,    2U },
+    { LCD_INIT_COMMAND, LCD_COMMAND_ENTRY,    1U }
+};
+
+#define LCD_INIT_STEP_COUNT \
+    ((uint8_t)(sizeof(lcdInitSteps) / sizeof(lcdInitSteps[0])))
 
 static uint8_t cursorColumn;
 static uint8_t cursorRow;
 static uint8_t lcdI2cAddress = LCD_I2C_ADDRESS_MAX;
-static uint8_t lcdLastOutput;
+static uint8_t scanAddress;
+static uint8_t initStepIndex;
+static uint8_t renderColumn;
+static uint8_t renderRow;
 static char lcdFrame[LCD1602_ROWS][LCD1602_COLUMNS];
 static bool lcdReady;
+static bool frameDirty;
+static bool renderAddressPending;
+static bool renderHealthPending;
+static LcdState lcdState;
+static uint32_t nextActionTick;
 static uint32_t nextHealthCheckTick;
-static uint32_t nextReconnectTick;
 
 static void I2cDelay(void)
 {
@@ -112,10 +154,10 @@ static bool I2cWriteByte(uint8_t data)
         I2cSetScl(GPIO_PIN_RESET);
     }
 
-    /* Release SDA and read the receiver's active-low acknowledge bit. */
     I2cSetSda(GPIO_PIN_SET);
     I2cSetScl(GPIO_PIN_SET);
-    bool acknowledged = HAL_GPIO_ReadPin(LCD_SDA_PORT, LCD_SDA_PIN) == GPIO_PIN_RESET;
+    bool acknowledged =
+        HAL_GPIO_ReadPin(LCD_SDA_PORT, LCD_SDA_PIN) == GPIO_PIN_RESET;
     I2cSetScl(GPIO_PIN_RESET);
     return acknowledged;
 }
@@ -143,9 +185,18 @@ static uint8_t I2cReadByte(void)
     return data;
 }
 
+static bool I2cProbeAddress(uint8_t address)
+{
+    I2cStart();
+    bool acknowledged = I2cWriteByte((uint8_t)(address << 1));
+    I2cStop();
+    return acknowledged;
+}
+
 static bool LcdWriteExpander(uint8_t value)
 {
     uint8_t data = value | LCD_BACKLIGHT;
+
     I2cStart();
     bool acknowledged = I2cWriteByte((uint8_t)(lcdI2cAddress << 1));
     if (acknowledged)
@@ -153,11 +204,6 @@ static bool LcdWriteExpander(uint8_t value)
         acknowledged = I2cWriteByte(data);
     }
     I2cStop();
-
-    if (acknowledged)
-    {
-        lcdLastOutput = data;
-    }
     return acknowledged;
 }
 
@@ -179,33 +225,29 @@ static bool LcdReadExpander(uint8_t *value)
     return acknowledged;
 }
 
-static bool LcdExpanderStateMatches(void)
+static bool LcdHealthIsValid(void)
 {
     uint8_t expanderState = 0U;
 
+    /* RW and E are always low between transfers. Both become high after a
+       PCF8574 power reset, allowing a quick unplug/replug to be detected. */
     return LcdReadExpander(&expanderState) &&
-           ((expanderState ^ lcdLastOutput) & LCD_HEALTH_MASK) == 0U;
+           (expanderState & (LCD_RW | LCD_ENABLE)) == 0U;
 }
 
 static bool LcdPulseEnable(uint8_t value)
 {
-    if (!LcdWriteExpander(value | LCD_ENABLE))
-    {
-        return false;
-    }
-    HAL_Delay(1);
-    if (!LcdWriteExpander(value & (uint8_t)~LCD_ENABLE))
-    {
-        return false;
-    }
-    HAL_Delay(1);
-    return true;
+    /* Each PCF8574 transfer already keeps E stable far longer than the LCD's
+       pulse requirement, so millisecond HAL_Delay calls are unnecessary. */
+    return LcdWriteExpander(value) &&
+           LcdWriteExpander(value | LCD_ENABLE) &&
+           LcdWriteExpander(value & (uint8_t)~LCD_ENABLE);
 }
 
 static bool LcdWriteNibble(uint8_t nibble, uint8_t mode)
 {
     uint8_t value = (uint8_t)((nibble & 0x0FU) << 4) | mode;
-    return LcdWriteExpander(value) && LcdPulseEnable(value);
+    return LcdPulseEnable(value);
 }
 
 static bool LcdSend(uint8_t value, uint8_t mode)
@@ -216,130 +258,164 @@ static bool LcdSend(uint8_t value, uint8_t mode)
 
 static bool LcdCommand(uint8_t command)
 {
-    if (!LcdSend(command, 0U))
-    {
-        return false;
-    }
-
-    if (command == LCD_COMMAND_CLEAR || command == LCD_COMMAND_HOME)
-    {
-        HAL_Delay(2);
-    }
-    return true;
+    return LcdSend(command, 0U);
 }
 
-static void LcdSetOffline(void)
+static void LcdRestartRender(bool checkHealthFirst)
+{
+    frameDirty = true;
+    renderRow = 0U;
+    renderColumn = 0U;
+    renderAddressPending = true;
+    renderHealthPending = checkHealthFirst && lcdReady;
+}
+
+static void LcdSetOffline(uint32_t now)
 {
     lcdReady = false;
-    nextReconnectTick = HAL_GetTick();
+    lcdState = LCD_STATE_OFFLINE_WAIT;
+    nextActionTick = now + LCD_RECONNECT_INTERVAL_MS;
+    renderHealthPending = false;
 }
 
-static bool LcdPrepareTransfer(void)
+static void LcdBeginScan(uint32_t now)
 {
-    if (!lcdReady)
+    if (!I2cRecoverBus())
     {
-        return false;
+        LcdSetOffline(now);
+        return;
     }
 
-    if (!LcdExpanderStateMatches())
-    {
-        LcdSetOffline();
-        return false;
-    }
-    return true;
+    scanAddress = LCD_I2C_ADDRESS_MIN;
+    lcdState = LCD_STATE_SCANNING;
 }
 
-static bool LcdFindDevice(void)
+static void LcdUpdateScan(uint32_t now)
 {
-    for (uint8_t address = LCD_I2C_ADDRESS_MIN;
-         address <= LCD_I2C_ADDRESS_MAX; address++)
+    if (I2cProbeAddress(scanAddress))
     {
-        I2cStart();
-        bool acknowledged = I2cWriteByte((uint8_t)(address << 1));
-        I2cStop();
-        if (acknowledged)
-        {
-            lcdI2cAddress = address;
-            return true;
-        }
+        lcdI2cAddress = scanAddress;
+        initStepIndex = 0U;
+        nextActionTick = now + LCD_POWER_UP_DELAY_MS;
+        lcdState = LCD_STATE_INITIALIZING;
+        return;
     }
-    return false;
+
+    if (scanAddress < LCD_I2C_ADDRESS_MAX)
+    {
+        scanAddress++;
+        return;
+    }
+
+    LcdSetOffline(now);
 }
 
-static bool LcdInitializeController(void)
+static void LcdUpdateInitialization(uint32_t now)
 {
-    HAL_Delay(50);
-    if (!LcdWriteNibble(0x03U, 0U))
+    if (!TickReached(now, nextActionTick))
     {
-        return false;
-    }
-    HAL_Delay(5);
-    if (!LcdWriteNibble(0x03U, 0U))
-    {
-        return false;
-    }
-    HAL_Delay(1);
-    if (!LcdWriteNibble(0x03U, 0U) || !LcdWriteNibble(0x02U, 0U))
-    {
-        return false;
+        return;
     }
 
-    return LcdCommand(LCD_COMMAND_FUNCTION) &&
-           LcdCommand(LCD_COMMAND_DISPLAY) &&
-           LcdCommand(LCD_COMMAND_CLEAR) &&
-           LcdCommand(LCD_COMMAND_ENTRY);
+    if (initStepIndex >= LCD_INIT_STEP_COUNT)
+    {
+        lcdReady = true;
+        lcdState = LCD_STATE_READY;
+        nextHealthCheckTick = now + LCD_HEALTH_INTERVAL_MS;
+        LcdRestartRender(false);
+        return;
+    }
+
+    const LcdInitStep *step = &lcdInitSteps[initStepIndex];
+    bool succeeded = step->operation == LCD_INIT_NIBBLE
+        ? LcdWriteNibble(step->value, 0U)
+        : LcdCommand(step->value);
+
+    if (!succeeded)
+    {
+        LcdSetOffline(now);
+        return;
+    }
+
+    initStepIndex++;
+    nextActionTick = now + step->delayAfterMs;
 }
 
-static bool LcdRestoreCursor(void)
-{
-    static const uint8_t rowAddress[LCD1602_ROWS] = {0x00U, 0x40U};
-    uint8_t row = cursorRow < LCD1602_ROWS ? cursorRow : LCD1602_ROWS - 1U;
-    uint8_t column =
-        cursorColumn < LCD1602_COLUMNS ? cursorColumn : LCD1602_COLUMNS - 1U;
-
-    return LcdCommand(
-        (uint8_t)(LCD_COMMAND_DDRAM | (rowAddress[row] + column)));
-}
-
-static bool LcdRenderFrame(void)
+static void LcdUpdateRender(uint32_t now)
 {
     static const uint8_t rowAddress[LCD1602_ROWS] = {0x00U, 0x40U};
 
-    for (uint8_t row = 0U; row < LCD1602_ROWS; row++)
+    if (!frameDirty)
     {
-        if (!LcdCommand((uint8_t)(LCD_COMMAND_DDRAM | rowAddress[row])))
-        {
-            return false;
-        }
-
-        for (uint8_t column = 0U; column < LCD1602_COLUMNS; column++)
-        {
-            if (!LcdSend((uint8_t)lcdFrame[row][column], LCD_RS))
-            {
-                return false;
-            }
-        }
+        return;
     }
 
-    return LcdRestoreCursor();
+    if (renderHealthPending)
+    {
+        renderHealthPending = false;
+        nextHealthCheckTick = now + LCD_HEALTH_INTERVAL_MS;
+        if (!LcdHealthIsValid())
+        {
+            LcdSetOffline(now);
+            return;
+        }
+        return;
+    }
+
+    if (renderAddressPending)
+    {
+        if (!LcdCommand(
+                (uint8_t)(LCD_COMMAND_DDRAM | rowAddress[renderRow])))
+        {
+            LcdSetOffline(now);
+            return;
+        }
+
+        renderAddressPending = false;
+        return;
+    }
+
+    if (!LcdSend((uint8_t)lcdFrame[renderRow][renderColumn], LCD_RS))
+    {
+        LcdSetOffline(now);
+        return;
+    }
+
+    renderColumn++;
+    if (renderColumn < LCD1602_COLUMNS)
+    {
+        return;
+    }
+
+    renderColumn = 0U;
+    renderRow++;
+    if (renderRow >= LCD1602_ROWS)
+    {
+        frameDirty = false;
+        return;
+    }
+
+    renderAddressPending = true;
 }
 
-static bool LcdTryConnect(void)
+static void LcdUpdateReady(uint32_t now)
 {
-    lcdReady = false;
-    if (!I2cRecoverBus() || !LcdFindDevice() ||
-        !LcdInitializeController() || !LcdRenderFrame())
+    if (TickReached(now, nextHealthCheckTick))
     {
-        nextReconnectTick = HAL_GetTick() + LCD_RECONNECT_INTERVAL_MS;
-        return false;
+        nextHealthCheckTick = now + LCD_HEALTH_INTERVAL_MS;
+        if (!LcdHealthIsValid())
+        {
+            LcdSetOffline(now);
+            return;
+        }
+        renderHealthPending = false;
+        return;
     }
 
-    lcdReady = true;
-    nextHealthCheckTick = HAL_GetTick() + LCD_HEALTH_INTERVAL_MS;
-    return true;
+    LcdUpdateRender(now);
 }
 
-bool Lcd1602Init(void)
+void Lcd1602Init(void)
 {
     GPIO_InitTypeDef gpioInit = {0};
 
@@ -357,29 +433,39 @@ bool Lcd1602Init(void)
     I2cSetSda(GPIO_PIN_SET);
     I2cSetScl(GPIO_PIN_SET);
 
-    return LcdTryConnect();
+    lcdState = LCD_STATE_OFFLINE_WAIT;
+    nextActionTick = HAL_GetTick();
+    LcdRestartRender(false);
 }
 
 void Lcd1602Update(void)
 {
     uint32_t now = HAL_GetTick();
 
-    if (lcdReady)
+    switch (lcdState)
     {
-        if (TickReached(now, nextHealthCheckTick))
-        {
-            nextHealthCheckTick = now + LCD_HEALTH_INTERVAL_MS;
-            if (!LcdExpanderStateMatches())
+        case LCD_STATE_OFFLINE_WAIT:
+            if (TickReached(now, nextActionTick))
             {
-                LcdSetOffline();
+                LcdBeginScan(now);
             }
-        }
-        return;
-    }
+            break;
 
-    if (TickReached(now, nextReconnectTick))
-    {
-        LcdTryConnect();
+        case LCD_STATE_SCANNING:
+            LcdUpdateScan(now);
+            break;
+
+        case LCD_STATE_INITIALIZING:
+            LcdUpdateInitialization(now);
+            break;
+
+        case LCD_STATE_READY:
+            LcdUpdateReady(now);
+            break;
+
+        default:
+            LcdSetOffline(now);
+            break;
     }
 }
 
@@ -393,17 +479,11 @@ void Lcd1602Clear(void)
     memset(lcdFrame, ' ', sizeof(lcdFrame));
     cursorColumn = 0U;
     cursorRow = 0U;
-
-    if (LcdPrepareTransfer() && !LcdCommand(LCD_COMMAND_CLEAR))
-    {
-        LcdSetOffline();
-    }
+    LcdRestartRender(lcdReady);
 }
 
 void Lcd1602SetCursor(uint8_t column, uint8_t row)
 {
-    static const uint8_t rowAddress[LCD1602_ROWS] = {0x00U, 0x40U};
-
     if (column >= LCD1602_COLUMNS)
     {
         column = LCD1602_COLUMNS - 1U;
@@ -415,23 +495,16 @@ void Lcd1602SetCursor(uint8_t column, uint8_t row)
 
     cursorColumn = column;
     cursorRow = row;
-
-    if (LcdPrepareTransfer() &&
-        !LcdCommand((uint8_t)(LCD_COMMAND_DDRAM |
-                              (rowAddress[row] + column))))
-    {
-        LcdSetOffline();
-    }
 }
 
 void Lcd1602WriteString(const char *text)
 {
+    bool changed = false;
+
     if (text == NULL)
     {
         return;
     }
-
-    bool canWrite = LcdPrepareTransfer();
 
     while (*text != '\0' && cursorRow < LCD1602_ROWS)
     {
@@ -442,8 +515,8 @@ void Lcd1602WriteString(const char *text)
                 break;
             }
 
-            Lcd1602SetCursor(0U, cursorRow + 1U);
-            canWrite = lcdReady;
+            cursorColumn = 0U;
+            cursorRow++;
             if (*text == '\n')
             {
                 text++;
@@ -451,14 +524,18 @@ void Lcd1602WriteString(const char *text)
             }
         }
 
-        lcdFrame[cursorRow][cursorColumn] = *text;
-        if (canWrite && !LcdSend((uint8_t)*text, LCD_RS))
+        if (lcdFrame[cursorRow][cursorColumn] != *text)
         {
-            LcdSetOffline();
-            canWrite = false;
+            lcdFrame[cursorRow][cursorColumn] = *text;
+            changed = true;
         }
         text++;
         cursorColumn++;
+    }
+
+    if (changed)
+    {
+        LcdRestartRender(lcdReady);
     }
 }
 
