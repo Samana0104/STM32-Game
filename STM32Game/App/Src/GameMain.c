@@ -8,9 +8,7 @@
 #include "GLed.h"
 #include "GTimer.h"
 #include "GUsart.h"
-#include "InGameState.h"
 #include "GLcd1602.h"
-#include "ReadyState.h"
 #include "SoundPlayer.h"
 #include "stm32f4xx_hal.h"
 
@@ -38,21 +36,6 @@ static void GameInit(void)
     GameStateInit(GAME_STATE_TITLE);
 }
 
-static void FinishCurrentStage(void)
-{
-    GameStage currentStage = ReadyStateGetStage();
-
-    if (currentStage < GAME_STAGE_5)
-    {
-        ReadyStateSetStage((GameStage)(currentStage + 1));
-        GameStateChange(GAME_STATE_READY);
-    }
-    else
-    {
-        GameStateChange(GAME_STATE_RESULT);
-    }
-}
-
 static void GameUpdate(void)
 {
     UpdateButtonState();
@@ -62,18 +45,6 @@ static void GameUpdate(void)
     SoundPlayerUpdate();
 
     GameStateUpdate();
-
-    if (GameStateGet() == GAME_STATE_PLAYING && InGameStateIsFinished())
-    {
-        if (InGameStateGetLife() == 0U)
-        {
-            GameStateChange(GAME_STATE_RESULT);
-        }
-        else
-        {
-            FinishCurrentStage();
-        }
-    }
 
 #ifndef NDEBUG
     CheatUpdate();

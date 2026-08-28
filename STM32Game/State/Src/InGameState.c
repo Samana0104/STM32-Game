@@ -2,6 +2,7 @@
 #include "GameLcd.h"
 #include "GameScore.h"
 #include "GameStageConfig.h"
+#include "GameState.h"
 #include "GButton.h"
 #include "GCheat.h"
 #include "GFnd.h"
@@ -143,6 +144,21 @@ static bool IsGameTimeOver(uint32_t currentTick)
     return (currentTick - startTick) >= stageConfig->durationMs;
 }
 
+static void FinishCurrentStage(void)
+{
+    const GameStage currentStage = ReadyStateGetStage();
+
+    isFinished = true;
+    if (life == 0U || currentStage >= GAME_STAGE_5)
+    {
+        GameStateChange(GAME_STATE_RESULT);
+        return;
+    }
+
+    ReadyStateSetStage((GameStage)(currentStage + 1));
+    GameStateChange(GAME_STATE_READY);
+}
+
 void InGameStateEnter(void)
 {
     GameStage currentStage = ReadyStateGetStage();
@@ -193,7 +209,7 @@ void InGameStateUpdate(void)
     if (IsGameTimeOver(currentTick))
     {
         TurnOffAllMoles();
-        isFinished = true;
+        FinishCurrentStage();
         return;
     }
 
@@ -245,7 +261,7 @@ void InGameStateUpdate(void)
         if (life == 0U)
         {
             TurnOffAllMoles();
-            isFinished = true;
+            FinishCurrentStage();
             return;
         }
         SpawnMoles(currentTick);
