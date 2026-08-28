@@ -3,9 +3,6 @@
 #include "GameScore.h"
 #include "main.h"
 
-/* 선택된 항목 앞에 '>' 커서를 붙여 게임 시작 메뉴를 표시한다. */
-void GameLcdShowTitleMenu(bool recordSelected);
-
 /* 스테이지 번호와 3, 2, 1, START 카운트다운을 표시한다. */
 void GameLcdShowCountdown(uint8_t stage, const char *text);
 

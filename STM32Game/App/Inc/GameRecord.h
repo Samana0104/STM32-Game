@@ -10,5 +10,8 @@ void GameRecordInit(void);
 /* 점수가 100위 안에 들면 삽입하고 Flash에 저장한다. */
 bool GameRecordSave(uint32_t score);
 
+/* 모든 순위 기록을 지우고 Flash에 반영한다. */
+bool GameRecordReset(void);
+
 uint32_t GameRecordGetBestScore(void);
 uint32_t GameRecordGetScore(uint32_t rank);

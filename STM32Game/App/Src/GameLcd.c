@@ -41,13 +41,6 @@ static const char *GetComboRankText(GameComboRank rank)
     }
 }
 
-void GameLcdShowTitleMenu(bool recordSelected)
-{
-    Lcd1602Printf(recordSelected
-                      ? " 1.GameStart\n>2.Record"
-                      : ">1.GameStart\n 2.Record");
-}
-
 void GameLcdShowCountdown(uint8_t stage, const char *text)
 {
     if (text != NULL)

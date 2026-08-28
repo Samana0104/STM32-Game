@@ -1,4 +1,5 @@
 #include "GameState.h"
+#include "CreditState.h"
 #include "InGameState.h"
 #include "RecordState.h"
 #include "ReadyState.h"
@@ -20,6 +21,9 @@ static const GameStateHandler stateHandlers[GAME_STATE_COUNT] =
     [GAME_STATE_RECORD]  = { RecordStateEnter,
                              RecordStateUpdate,
                              RecordStateExit },
+    [GAME_STATE_CREDIT]  = { CreditStateEnter,
+                             CreditStateUpdate,
+                             CreditStateExit },
     [GAME_STATE_READY]   = { ReadyStateEnter,
                              ReadyStateUpdate,
                              ReadyStateExit },

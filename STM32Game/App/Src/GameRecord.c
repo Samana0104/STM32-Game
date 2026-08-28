@@ -59,6 +59,12 @@ bool GameRecordSave(uint32_t score)
     return GDataWrite(0U, bestScores, sizeof(bestScores)) && SaveFlashData();
 }
 
+bool GameRecordReset(void)
+{
+    memset(bestScores, 0, sizeof(bestScores));
+    return GDataWrite(0U, bestScores, sizeof(bestScores)) && SaveFlashData();
+}
+
 uint32_t GameRecordGetBestScore(void)
 {
     return bestScores[0];
