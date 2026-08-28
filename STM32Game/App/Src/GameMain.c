@@ -25,16 +25,13 @@ static void GameInit(void)
     GledInit();
     GButtonInit();
     GJoystickInit();
-
     TimerInit();
     SoundPlayerInit();
     UartInit();
     FndInit();
     GameRecordInit();
-
     SetFndSingleDigit(INITIAL_STAGE);
     SetFnd4DigitNumber(0U);
-
     Lcd1602Init();
 
     /* TitleState가 LCD 메뉴 출력과 조이스틱 선택을 담당한다. */
@@ -62,9 +59,9 @@ static void GameUpdate(void)
     UpdateJoystickState();
     FndUpdate();
     Lcd1602Update();
+    SoundPlayerUpdate();
 
     GameStateUpdate();
-    SoundPlayerUpdate();
 
     if (GameStateGet() == GAME_STATE_PLAYING && InGameStateIsFinished())
     {

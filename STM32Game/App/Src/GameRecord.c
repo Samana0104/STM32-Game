@@ -1,8 +1,6 @@
 #include "GameRecord.h"
 #include "GData.h"
 
-#include <string.h>
-
 static uint32_t bestScores[GAME_RECORD_MAX_COUNT];
 
 static uint32_t FindInsertIndex(uint32_t score)
