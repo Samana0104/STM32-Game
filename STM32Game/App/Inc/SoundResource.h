@@ -26,3 +26,4 @@ extern const SoundSequence titleBgm;
 extern const SoundSequence canonSound;
 extern const SoundSequence inGameBgm;
 extern const SoundSequence resultBgm;
+extern const SoundSequence creditBgm;

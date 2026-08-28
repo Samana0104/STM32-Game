@@ -3,7 +3,6 @@
 #include "GameState.h"
 #include "GCheat.h"
 #include "GJoystick.h"
-#include "GLcd1602.h"
 #include "SoundPlayer.h"
 
 #define CREDIT_COUNT 4U
@@ -33,7 +32,7 @@ void CreditStateEnter(void)
 {
     isActive = true;
     selectedCredit = 0U;
-    SoundPlayerPlayBgm(SOUND_ID_TITLE_BGM);
+    SoundPlayerPlayBgm(SOUND_ID_CREDIT_BGM);
     PrintCredits();
     G_LOG(INFO, "CreditState entered.\r\n");
 }

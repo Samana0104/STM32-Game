@@ -8,7 +8,7 @@
 #include "GLed.h"
 #include "GTimer.h"
 #include "GUsart.h"
-#include "GLcd1602.h"
+#include "Lcd1602.h"
 #include "SoundPlayer.h"
 #include "stm32f4xx_hal.h"
 

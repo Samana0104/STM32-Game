@@ -28,6 +28,7 @@ typedef enum
 
 typedef enum
 {
+    SOUND_DELAY_VERY_SHORT = 75,
     SOUND_DELAY_SHORT = 100,
     SOUND_DELAY_NORMAL = 200,
     SOUND_DELAY_LONG = 400,
@@ -47,6 +48,7 @@ typedef enum
     SOUND_ID_CANON,
     SOUND_ID_IN_GAME_BGM,
     SOUND_ID_RESULT_BGM,
+    SOUND_ID_CREDIT_BGM,
     SOUND_ID_MAX_COUNT
 } SoundId;
 
