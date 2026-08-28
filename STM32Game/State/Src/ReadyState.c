@@ -1,9 +1,9 @@
 #include "ReadyState.h"
 
+#include "GameLcd.h"
 #include "GameState.h"
 #include "GCheat.h"
 #include "GFnd.h"
-#include "GLcd1602.h"
 #include "SoundPlayer.h"
 
 #define COUNTDOWN_STEP_MS    1000U
@@ -21,12 +21,6 @@ static bool isActive;
 static GameStage currentStage = GAME_STAGE_1;
 static uint8_t currentStep;
 static uint32_t countdownStartTick;
-
-static void PrintCountdown(void)
-{
-    Lcd1602Printf("STAGE %u\n%s", (unsigned int)currentStage,
-                  countdownText[currentStep]);
-}
 
 static bool IsStageValid(GameStage stage)
 {
@@ -50,7 +44,7 @@ void ReadyStateEnter(void)
     countdownStartTick = HAL_GetTick();
 
     SetFndSingleDigit((uint8_t)currentStage);
-    PrintCountdown();
+    GameLcdShowCountdown((uint8_t)currentStage, countdownText[currentStep]);
     SoundPlayerPlayEffect(SOUND_ID_BUTTON);
     G_LOG(INFO, "ReadyState entered.\r\n");
 }
@@ -77,7 +71,8 @@ void ReadyStateUpdate(void)
     if (nextStep != currentStep)
     {
         currentStep = nextStep;
-        PrintCountdown();
+        GameLcdShowCountdown((uint8_t)currentStage,
+                             countdownText[currentStep]);
         SoundPlayerPlayEffect(currentStep == (COUNTDOWN_STEP_COUNT - 1U)
                                   ? SOUND_ID_START
                                   : SOUND_ID_BUTTON);
