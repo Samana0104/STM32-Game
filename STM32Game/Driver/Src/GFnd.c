@@ -30,8 +30,9 @@ static const uint8_t segmentTable[10] = {
     0x6F  /* 9 (A B C D F G) */
 };
 
-static uint8_t displayDigits[FND_TOTAL_DIGITS] = {0, 0, 0, 0, 0};
+static volatile uint8_t displayDigits[FND_TOTAL_DIGITS] = {0, 0, 0, 0, 0};
 static uint8_t currentDigitIndex = 0;
+static volatile bool isInitialized = false;
 
 static void ShiftOutSegmentData(uint8_t segByte)
 {
@@ -71,6 +72,8 @@ void FndInit(void)
 {
     FndClear();
     SelectDigit(0xFF);
+    currentDigitIndex = 0U;
+    isInitialized = true;
 }
 
 void FndClear(void)
@@ -89,24 +92,40 @@ void SetFndSingleDigit(uint8_t digit)
 
 void SetFnd4DigitNumber(uint16_t number)
 {
+    uint32_t interruptMask;
+
     if (number > FND_MAX_4DIGIT)
     {
         number = FND_MAX_4DIGIT;
     }
 
+    /* SysTick 스캔 중간에 점수 일부만 바뀌지 않도록 한 번에 갱신한다. */
+    interruptMask = __get_PRIMASK();
+    __disable_irq();
     displayDigits[1] = (number / 1000) % 10;
     displayDigits[2] = (number / 100) % 10;
     displayDigits[3] = (number / 10) % 10;
     displayDigits[4] = number % 10;
+    if (interruptMask == 0U)
+    {
+        __enable_irq();
+    }
 }
 
 void FndUpdate(void)
 {
+    uint8_t digitVal;
+
+    if (!isInitialized)
+    {
+        return;
+    }
+
     /* 잔상 방지를 위해 자릿수 전환 전 공통 접지 및 세그먼트 전압 완전 차단 */
     SelectDigit(0xFF);
     ShiftOutSegmentData(0x00); /* <--- 이 줄을 추가하여 0V 출력 강제 (잔상 제거) */
 
-    uint8_t digitVal = displayDigits[currentDigitIndex];
+    digitVal = displayDigits[currentDigitIndex];
     ShiftOutSegmentData(segmentTable[digitVal]);
 
     SelectDigit(currentDigitIndex);
