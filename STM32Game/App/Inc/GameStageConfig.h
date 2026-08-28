@@ -1,7 +1,16 @@
 #pragma once
 
-#include "GameStage.h"
 #include "main.h"
+
+typedef enum
+{
+    GAME_STAGE_1 = 1,
+    GAME_STAGE_2,
+    GAME_STAGE_3,
+    GAME_STAGE_4,
+    GAME_STAGE_5,
+    GAME_STAGE_COUNT
+} GameStage;
 
 typedef struct
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GameStage.h"
+#include "GameStageConfig.h"
 #include "main.h"
 
 /* 다음 카운트다운에서 시작할 스테이지를 지정한다. */

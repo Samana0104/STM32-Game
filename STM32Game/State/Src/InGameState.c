@@ -1,5 +1,4 @@
 #include "InGameState.h"
-#include "GameScore.h"
 #include "GameStageConfig.h"
 #include "GameState.h"
 #include "GButton.h"
@@ -13,6 +12,18 @@
 #define MOLE_COUNT             ((uint8_t)LED_MAX)
 #define STAGE_END_GRACE_MS     2000U
 #define LCD_LIFE_MAX           10U
+#define GAME_HIT_BASE_SCORE    10U
+#define GAME_MISS_PENALTY      20U
+#define GAME_SCORE_MAX         9999U
+
+typedef enum
+{
+    GAME_COMBO_RANK_NONE = 0,
+    GAME_COMBO_RANK_GOOD,
+    GAME_COMBO_RANK_NICE,
+    GAME_COMBO_RANK_GREAT,
+    GAME_COMBO_RANK_PERFECT
+} GameComboRank;
 
 static bool isActive;
 static bool isFinished;
@@ -30,6 +41,45 @@ static uint32_t maxCombo;
 static uint32_t missCount;
 static uint32_t randomState;
 static const GameStageConfig *stageConfig;
+
+static GameComboRank GetComboRank(uint32_t currentCombo)
+{
+    if (currentCombo >= 100U)
+    {
+        return GAME_COMBO_RANK_PERFECT;
+    }
+    if (currentCombo >= 60U)
+    {
+        return GAME_COMBO_RANK_GREAT;
+    }
+    if (currentCombo >= 30U)
+    {
+        return GAME_COMBO_RANK_NICE;
+    }
+    if (currentCombo >= 10U)
+    {
+        return GAME_COMBO_RANK_GOOD;
+    }
+    return GAME_COMBO_RANK_NONE;
+}
+
+static uint32_t GetComboBonus(GameComboRank rank)
+{
+    switch (rank)
+    {
+        case GAME_COMBO_RANK_GOOD:    return 10U;
+        case GAME_COMBO_RANK_NICE:    return 13U;
+        case GAME_COMBO_RANK_GREAT:   return 16U;
+        case GAME_COMBO_RANK_PERFECT: return 20U;
+        case GAME_COMBO_RANK_NONE:
+        default:                      return 0U;
+    }
+}
+
+static uint32_t GetHitPoints(uint32_t currentCombo)
+{
+    return GAME_HIT_BASE_SCORE + GetComboBonus(GetComboRank(currentCombo));
+}
 
 static void FormatLifeSymbols(uint8_t currentLife,
                               char symbols[LCD_LIFE_MAX + 1U])
@@ -380,11 +430,11 @@ void InGameStateUpdate(void)
             {
                 maxCombo = combo;
             }
-            awardedScore = GameScoreGetHitPoints(combo);
+            awardedScore = GetHitPoints(combo);
             AddScore(awardedScore);
             if ((combo % 10U) == 0U)
             {
-                announcedRank = GameScoreGetComboRank(combo);
+                announcedRank = GetComboRank(combo);
                 announcedScore = awardedScore;
             }
             hitCount++;
