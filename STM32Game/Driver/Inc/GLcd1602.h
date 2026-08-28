@@ -6,6 +6,7 @@
 #define LCD1602_ROWS     2U
 
 bool Lcd1602Init(void);
+void Lcd1602Update(void);
 bool Lcd1602IsReady(void);
 void Lcd1602Clear(void);
 void Lcd1602SetCursor(uint8_t column, uint8_t row);

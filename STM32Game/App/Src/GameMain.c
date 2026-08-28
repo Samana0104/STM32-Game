@@ -88,6 +88,7 @@ int GameMain(void)
     {
         GameUpdate();
         FndUpdate();
+        Lcd1602Update();
         HAL_Delay(1);
     }
 
