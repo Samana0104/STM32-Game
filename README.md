@@ -275,8 +275,7 @@ stm32-game/
 │   ├── App/                    # 게임 규칙과 서비스
 │   │   ├── GameMain            # 초기화 및 메인 업데이트 루프
 │   │   ├── GameRecord          # Top 100 순위 관리
-│   │   ├── GameScore           # 점수 및 콤보 계산
-│   │   ├── GameStageConfig     # 스테이지 난이도 설정
+│   │   ├── GameStageConfig     # 스테이지 타입과 난이도 설정
 │   │   └── SoundPlayer         # BGM/효과음 시퀀서
 │   ├── Bsp/                    # GPIO/타이머/UART 보드 지원 계층
 │   │   ├── GButton
@@ -342,4 +341,4 @@ build/Release/STM32-Game.elf
 - 시간 기반 기능은 긴 대기 함수 대신 `HAL_GetTick()`과 상태 변수로 처리합니다.
 - FND처럼 일정한 주기가 필요한 출력은 SysTick 인터럽트에서 처리합니다.
 - 하드웨어 접근, 게임 규칙, 상태 전환 및 리소스 데이터를 폴더별로 분리합니다.
-- 난이도는 `GameStageConfig.c`, 점수 정책은 `GameScore.c`, 음원은 `Res/Sound`에서 독립적으로 조정할 수 있습니다.
+- 스테이지 타입과 난이도는 `GameStageConfig`, 점수·콤보 정책은 해당 규칙을 사용하는 `InGameState.c`, 음원은 `Res/Sound`에서 조정할 수 있습니다.
