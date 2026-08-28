@@ -17,6 +17,7 @@ typedef struct
 } CommandEntry;
 
 static uint32_t lastFrameTick;
+static uint32_t frameCount;
 static uint32_t currentFpsMilli;
 static bool fpsMonitoring;
 static uint32_t fpsLastReport;
@@ -217,9 +218,11 @@ static void CommandFps(int argc, char *argv[])
 
     fpsMonitoring = true;
     fpsLastReport = HAL_GetTick();
+    lastFrameTick = fpsLastReport;
+    frameCount = 0U;
 
     ReportFps();
-    G_LOG(INFO, "FPS monitoring started (every 3 seconds).\r\n");
+    G_LOG(INFO, "FPS monitoring started (every 1 second).\r\n");
 }
 
 static void CommandStop(int argc, char *argv[])
@@ -320,6 +323,13 @@ void CheatUpdate(void)
     if (fpsMonitoring &&
         ((now - fpsLastReport) >= CHEAT_REPORT_INTERVAL_MS))
     {
+        const uint32_t elapsedMs = now - lastFrameTick;
+        if (elapsedMs > 0U)
+        {
+            currentFpsMilli = (uint32_t)(((uint64_t)frameCount * 1000000ULL) / elapsedMs);
+        }
+        frameCount = 0U;
+        lastFrameTick = now;
         fpsLastReport = now;
         ReportFps();
     }
@@ -328,6 +338,7 @@ void CheatUpdate(void)
 void CheatInit(void)
 {
     lastFrameTick = HAL_GetTick();
+    frameCount = 0U;
     currentFpsMilli = 0U;
     fpsMonitoring = false;
     gpioMonitoring = false;
@@ -335,15 +346,10 @@ void CheatInit(void)
 
 void CheatFrameTick(void)
 {
-    const uint32_t now = HAL_GetTick();
-    const uint32_t frameTimeMs = now - lastFrameTick;
-
-    if (frameTimeMs > 0U)
+    if (frameCount < UINT32_MAX)
     {
-        currentFpsMilli = 1000000U / frameTimeMs;
+        ++frameCount;
     }
-
-    lastFrameTick = now;
 }
 
 void CommandLog(LogLevel level, const char *args, ...)
