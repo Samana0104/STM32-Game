@@ -174,6 +174,28 @@ static bool IsStageEndingSoon(uint32_t currentTick)
     return (stageConfig->durationMs - elapsed) <= STAGE_END_GRACE_MS;
 }
 
+static bool ApplyMisses(uint8_t missAmount)
+{
+    uint32_t scorePenalty = (uint32_t)missAmount * GAME_MISS_PENALTY;
+
+    missCount += missAmount;
+    life = missAmount >= life ? 0U : (uint8_t)(life - missAmount);
+    SubtractScore(scorePenalty);
+    combo = 0U;
+    SetFnd4DigitNumber((uint16_t)score);
+    GameLcdShowMiss(life, scorePenalty);
+    SoundPlayerPlayEffect(SOUND_ID_FAIL);
+
+    if (life == 0U)
+    {
+        TurnOffAllMoles();
+        FinishCurrentStage();
+        return true;
+    }
+
+    return false;
+}
+
 void InGameStateEnter(void)
 {
     GameStage currentStage = ReadyStateGetStage();
@@ -214,6 +236,7 @@ void InGameStateUpdate(void)
     uint32_t announcedScore = 0U;
     uint8_t moleId;
     uint8_t hitCount = 0U;
+    uint8_t wrongPressCount = 0U;
     GameComboRank announcedRank = GAME_COMBO_RANK_NONE;
 
     if (!isActive)
@@ -244,8 +267,12 @@ void InGameStateUpdate(void)
     {
         uint8_t moleMask = GetMoleMask(moleId);
 
-        if (((activeMoles & moleMask) != 0U)
-            && WasButtonPressed((ButtonId)moleId))
+        if (!WasButtonPressed((ButtonId)moleId))
+        {
+            continue;
+        }
+
+        if ((activeMoles & moleMask) != 0U)
         {
             SetLedState((LedId)moleId, LED_OFF);
             activeMoles &= (uint8_t)(~moleMask);
@@ -263,9 +290,22 @@ void InGameStateUpdate(void)
             }
             hitCount++;
         }
+        else
+        {
+            wrongPressCount++;
+        }
     }
 
-    if (hitCount > 0U)
+    if (wrongPressCount > 0U)
+    {
+        if (ApplyMisses(wrongPressCount))
+        {
+            return;
+        }
+
+        SpawnMoles(currentTick);
+    }
+    else if (hitCount > 0U)
     {
         SetFnd4DigitNumber((uint16_t)score);
         GameLcdShowCombo(combo, life, announcedRank, announcedScore);
@@ -279,22 +319,12 @@ void InGameStateUpdate(void)
     else if ((currentTick - moleStartTick) >= moleVisibleDurationMs)
     {
         uint8_t missedMoles = CountActiveMoles();
-        uint32_t scorePenalty = (uint32_t)missedMoles * GAME_MISS_PENALTY;
 
-        missCount += missedMoles;
-        life = missedMoles >= life ? 0U : (uint8_t)(life - missedMoles);
-        SubtractScore(scorePenalty);
-        combo = 0U;
-        SetFnd4DigitNumber((uint16_t)score);
-        GameLcdShowMiss(life, scorePenalty);
-        SoundPlayerPlayEffect(SOUND_ID_FAIL);
-
-        if (life == 0U)
+        if (ApplyMisses(missedMoles))
         {
-            TurnOffAllMoles();
-            FinishCurrentStage();
             return;
         }
+
         SpawnMoles(currentTick);
     }
 }
