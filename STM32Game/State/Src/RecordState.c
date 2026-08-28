@@ -1,5 +1,4 @@
 #include "RecordState.h"
-
 #include "GameLcd.h"
 #include "GameRecord.h"
 #include "GameState.h"
@@ -38,7 +37,7 @@ void RecordStateUpdate(void)
 
     const JoystickDirection direction = GetJoystickDirection();
 
-    if (direction == JOYSTICK_DOWN)
+    if (direction == JOYSTICK_RIGHT)
     {
         if (firstRank < (GAME_RECORD_MAX_COUNT - 1U))
         {
@@ -47,7 +46,7 @@ void RecordStateUpdate(void)
             SoundPlayerPlayEffect(SOUND_ID_BUTTON);
         }
     }
-    else if (direction == JOYSTICK_UP)
+    else if (direction == JOYSTICK_LEFT)
     {
         if (firstRank > 1U)
         {
@@ -56,7 +55,7 @@ void RecordStateUpdate(void)
             SoundPlayerPlayEffect(SOUND_ID_BUTTON);
         }
     }
-    else if (direction == JOYSTICK_LEFT)
+    else if (direction == JOYSTICK_DOWN)
     {
         SoundPlayerPlayEffect(SOUND_ID_BUTTON);
         GameStateChange(GAME_STATE_TITLE);
