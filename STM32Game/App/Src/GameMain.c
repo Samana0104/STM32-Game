@@ -40,7 +40,6 @@ static void GameUpdate(void)
 {
     UpdateButtonState();
     UpdateJoystickState();
-    FndUpdate();
     Lcd1602Update();
     SoundPlayerUpdate();
 
