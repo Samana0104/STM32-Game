@@ -17,11 +17,13 @@
 static bool isActive;
 static bool isFinished;
 static bool isStageEnding;
+static bool isWaitingForMole;
 static uint8_t activeMoles;
 static uint8_t life;
 static uint32_t startTick;
 static uint32_t moleStartTick;
 static uint32_t moleVisibleDurationMs;
+static uint32_t nextMoleTick;
 static uint32_t score;
 static uint32_t combo;
 static uint32_t maxCombo;
@@ -132,6 +134,19 @@ static uint32_t GetNextMoleVisibleDuration(void)
     return minimum + (NextRandom() % (maximum - minimum + 1U));
 }
 
+static uint32_t GetNextMoleSpawnDelay(void)
+{
+    const uint32_t minimum = stageConfig->moleSpawnDelayMinMs;
+    const uint32_t maximum = stageConfig->moleSpawnDelayMaxMs;
+
+    if (maximum <= minimum)
+    {
+        return minimum;
+    }
+
+    return minimum + (NextRandom() % (maximum - minimum + 1U));
+}
+
 static void AddScore(uint32_t points)
 {
     if (points >= (GAME_SCORE_MAX - score))
@@ -189,6 +204,14 @@ static void SpawnMoles(uint32_t currentTick)
 
     moleStartTick = currentTick;
     moleVisibleDurationMs = GetNextMoleVisibleDuration();
+    isWaitingForMole = false;
+}
+
+static void ScheduleNextMoles(uint32_t currentTick)
+{
+    TurnOffAllMoles();
+    isWaitingForMole = true;
+    nextMoleTick = currentTick + GetNextMoleSpawnDelay();
 }
 
 static bool IsGameTimeOver(uint32_t currentTick)
@@ -266,6 +289,7 @@ void InGameStateEnter(void)
     activeMoles = 0U;
     isFinished = false;
     isStageEnding = false;
+    isWaitingForMole = false;
     isActive = true;
 
     SetFndSingleDigit((uint8_t)currentStage);
@@ -312,6 +336,32 @@ void InGameStateUpdate(void)
         return;
     }
 
+    if (isWaitingForMole)
+    {
+        for (moleId = 0U; moleId < MOLE_COUNT; ++moleId)
+        {
+            if (WasButtonPressed((ButtonId)moleId))
+            {
+                ++wrongPressCount;
+            }
+        }
+
+        if (wrongPressCount > 0U)
+        {
+            if (!ApplyMisses(wrongPressCount))
+            {
+                ScheduleNextMoles(currentTick);
+            }
+            return;
+        }
+
+        if ((int32_t)(currentTick - nextMoleTick) >= 0)
+        {
+            SpawnMoles(currentTick);
+        }
+        return;
+    }
+
     for (moleId = 0U; moleId < MOLE_COUNT; moleId++)
     {
         uint8_t moleMask = GetMoleMask(moleId);
@@ -352,7 +402,7 @@ void InGameStateUpdate(void)
             return;
         }
 
-        SpawnMoles(currentTick);
+        ScheduleNextMoles(currentTick);
     }
     else if (hitCount > 0U)
     {
@@ -362,7 +412,7 @@ void InGameStateUpdate(void)
 
         if (activeMoles == 0U)
         {
-            SpawnMoles(currentTick);
+            ScheduleNextMoles(currentTick);
         }
     }
     else if ((currentTick - moleStartTick) >= moleVisibleDurationMs)
@@ -374,7 +424,7 @@ void InGameStateUpdate(void)
             return;
         }
 
-        SpawnMoles(currentTick);
+        ScheduleNextMoles(currentTick);
     }
 }
 

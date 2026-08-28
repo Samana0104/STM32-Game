@@ -8,6 +8,8 @@ typedef struct
     uint32_t durationMs;
     uint32_t moleVisibleMinMs;
     uint32_t moleVisibleMaxMs;
+    uint32_t moleSpawnDelayMinMs;
+    uint32_t moleSpawnDelayMaxMs;
     uint8_t maxActiveMoleCount;
     uint8_t initialLife;
 } GameStageConfig;
