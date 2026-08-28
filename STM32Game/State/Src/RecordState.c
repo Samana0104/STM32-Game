@@ -1,22 +1,30 @@
 #include "RecordState.h"
-#include "GameLcd.h"
 #include "GameRecord.h"
 #include "GameState.h"
 #include "GCheat.h"
 #include "GJoystick.h"
+#include "GLcd1602.h"
 #include "SoundPlayer.h"
 
 static bool isActive;
 static uint32_t firstRank;
 
+#define LCD_RECORD_MAX 9999U
+
+static uint32_t ClampRecordValue(uint32_t value)
+{
+    return value > LCD_RECORD_MAX ? LCD_RECORD_MAX : value;
+}
+
 static void PrintRecordPage(void)
 {
     const uint32_t secondRank = firstRank + 1U;
 
-    GameLcdShowRecordPage(firstRank,
-                          GameRecordGetScore(firstRank),
-                          secondRank,
-                          GameRecordGetScore(secondRank));
+    Lcd1602Printf("%lu. %lu\n%lu. %lu",
+                  (unsigned long)firstRank,
+                  (unsigned long)ClampRecordValue(GameRecordGetScore(firstRank)),
+                  (unsigned long)secondRank,
+                  (unsigned long)ClampRecordValue(GameRecordGetScore(secondRank)));
 }
 
 void RecordStateEnter(void)

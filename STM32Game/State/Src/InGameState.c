@@ -1,5 +1,4 @@
 #include "InGameState.h"
-#include "GameLcd.h"
 #include "GameScore.h"
 #include "GameStageConfig.h"
 #include "GameState.h"
@@ -7,11 +6,13 @@
 #include "GCheat.h"
 #include "GFnd.h"
 #include "GLed.h"
+#include "GLcd1602.h"
 #include "ReadyState.h"
 #include "SoundPlayer.h"
 
 #define MOLE_COUNT             ((uint8_t)LED_MAX)
 #define STAGE_END_GRACE_MS     2000U
+#define LCD_LIFE_MAX           10U
 
 static bool isActive;
 static bool isFinished;
@@ -27,6 +28,54 @@ static uint32_t maxCombo;
 static uint32_t missCount;
 static uint32_t randomState;
 static const GameStageConfig *stageConfig;
+
+static void FormatLifeSymbols(uint8_t currentLife,
+                              char symbols[LCD_LIFE_MAX + 1U])
+{
+    const uint8_t symbolCount =
+        currentLife > LCD_LIFE_MAX ? LCD_LIFE_MAX : currentLife;
+
+    memset(symbols, '$', symbolCount);
+    symbols[symbolCount] = '\0';
+}
+
+static const char *GetComboRankText(GameComboRank rank)
+{
+    switch (rank)
+    {
+        case GAME_COMBO_RANK_GOOD:    return "Good";
+        case GAME_COMBO_RANK_NICE:    return "Nice";
+        case GAME_COMBO_RANK_GREAT:   return "Great";
+        case GAME_COMBO_RANK_PERFECT: return "Perfect";
+        case GAME_COMBO_RANK_NONE:
+        default:                      return "";
+    }
+}
+
+static void PrintCombo(GameComboRank rank, uint32_t awardedScore)
+{
+    char lifeSymbols[LCD_LIFE_MAX + 1U];
+
+    FormatLifeSymbols(life, lifeSymbols);
+    if (rank != GAME_COMBO_RANK_NONE)
+    {
+        Lcd1602Printf("%s +%lu\nLife: %s", GetComboRankText(rank),
+                      (unsigned long)awardedScore, lifeSymbols);
+        return;
+    }
+
+    Lcd1602Printf("%lu Combo\nLife: %s", (unsigned long)combo,
+                  lifeSymbols);
+}
+
+static void PrintMiss(uint32_t scorePenalty)
+{
+    char lifeSymbols[LCD_LIFE_MAX + 1U];
+
+    FormatLifeSymbols(life, lifeSymbols);
+    Lcd1602Printf("Miss -%lu\nLife: %s", (unsigned long)scorePenalty,
+                  lifeSymbols);
+}
 
 static uint8_t GetMoleMask(uint8_t moleId)
 {
@@ -183,7 +232,7 @@ static bool ApplyMisses(uint8_t missAmount)
     SubtractScore(scorePenalty);
     combo = 0U;
     SetFnd4DigitNumber((uint16_t)score);
-    GameLcdShowMiss(life, scorePenalty);
+    PrintMiss(scorePenalty);
     SoundPlayerPlayEffect(SOUND_ID_FAIL);
 
     if (life == 0U)
@@ -222,7 +271,7 @@ void InGameStateEnter(void)
     SetFndSingleDigit((uint8_t)currentStage);
     SetFnd4DigitNumber((uint16_t)score);
 
-    GameLcdShowCombo(combo, life, GAME_COMBO_RANK_NONE, 0U);
+    PrintCombo(GAME_COMBO_RANK_NONE, 0U);
 
     SpawnMoles(startTick);
     SoundPlayerPlayBgm(SOUND_ID_IN_GAME_BGM);
@@ -308,7 +357,7 @@ void InGameStateUpdate(void)
     else if (hitCount > 0U)
     {
         SetFnd4DigitNumber((uint16_t)score);
-        GameLcdShowCombo(combo, life, announcedRank, announcedScore);
+        PrintCombo(announcedRank, announcedScore);
         SoundPlayerPlayEffect(SOUND_ID_SUCCESS);
 
         if (activeMoles == 0U)
