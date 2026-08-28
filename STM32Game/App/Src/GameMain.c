@@ -60,6 +60,8 @@ static void GameUpdate(void)
 {
     UpdateButtonState();
     UpdateJoystickState();
+    FndUpdate();
+    Lcd1602Update();
 
     GameStateUpdate();
     SoundPlayerUpdate();
@@ -90,8 +92,6 @@ int GameMain(void)
     while (1)
     {
         GameUpdate();
-        FndUpdate();
-        Lcd1602Update();
         HAL_Delay(1);
     }
 
