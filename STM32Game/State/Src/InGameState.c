@@ -10,10 +10,12 @@
 #include "ReadyState.h"
 #include "SoundPlayer.h"
 
-#define MOLE_COUNT ((uint8_t)LED_MAX)
+#define MOLE_COUNT             ((uint8_t)LED_MAX)
+#define STAGE_END_GRACE_MS     2000U
 
 static bool isActive;
 static bool isFinished;
+static bool isStageEnding;
 static uint8_t activeMoles;
 static uint8_t life;
 static uint32_t startTick;
@@ -21,6 +23,7 @@ static uint32_t moleStartTick;
 static uint32_t moleVisibleDurationMs;
 static uint32_t score;
 static uint32_t combo;
+static uint32_t maxCombo;
 static uint32_t missCount;
 static uint32_t randomState;
 static const GameStageConfig *stageConfig;
@@ -159,6 +162,18 @@ static void FinishCurrentStage(void)
     GameStateChange(GAME_STATE_READY);
 }
 
+static bool IsStageEndingSoon(uint32_t currentTick)
+{
+    uint32_t elapsed = currentTick - startTick;
+
+    if (elapsed >= stageConfig->durationMs)
+    {
+        return true;
+    }
+
+    return (stageConfig->durationMs - elapsed) <= STAGE_END_GRACE_MS;
+}
+
 void InGameStateEnter(void)
 {
     GameStage currentStage = ReadyStateGetStage();
@@ -172,12 +187,14 @@ void InGameStateEnter(void)
     {
         score = 0U;
         combo = 0U;
+        maxCombo = 0U;
         missCount = 0U;
     }
 
     randomState = startTick ^ 0xA5A5A5A5U;
     activeMoles = 0U;
     isFinished = false;
+    isStageEnding = false;
     isActive = true;
 
     SetFndSingleDigit((uint8_t)currentStage);
@@ -213,6 +230,16 @@ void InGameStateUpdate(void)
         return;
     }
 
+    if (IsStageEndingSoon(currentTick))
+    {
+        if (!isStageEnding)
+        {
+            TurnOffAllMoles();
+            isStageEnding = true;
+        }
+        return;
+    }
+
     for (moleId = 0U; moleId < MOLE_COUNT; moleId++)
     {
         uint8_t moleMask = GetMoleMask(moleId);
@@ -223,6 +250,10 @@ void InGameStateUpdate(void)
             SetLedState((LedId)moleId, LED_OFF);
             activeMoles &= (uint8_t)(~moleMask);
             combo++;
+            if (combo > maxCombo)
+            {
+                maxCombo = combo;
+            }
             awardedScore = GameScoreGetHitPoints(combo);
             AddScore(awardedScore);
             if ((combo % 10U) == 0U)
@@ -299,6 +330,11 @@ uint32_t InGameStateGetScore(void)
 uint32_t InGameStateGetCombo(void)
 {
     return combo;
+}
+
+uint32_t InGameStateGetMaxCombo(void)
+{
+    return maxCombo;
 }
 
 uint32_t InGameStateGetMissCount(void)

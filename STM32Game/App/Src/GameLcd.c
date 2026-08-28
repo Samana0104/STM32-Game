@@ -91,15 +91,19 @@ void GameLcdShowGameOver(void)
     Lcd1602Printf("GameOver");
 }
 
-void GameLcdShowResult(uint32_t score, uint32_t missCount)
+void GameLcdShowResult(uint32_t score, uint32_t maxCombo)
 {
-    Lcd1602Printf("Your Score:%lu\nMiss Count:%lu",
+    Lcd1602Printf("Your Score:%lu\nMax Combo:%lu",
                   (unsigned long)ClampRecordValue(score),
-                  (unsigned long)ClampRecordValue(missCount));
+                  (unsigned long)ClampRecordValue(maxCombo));
 }
 
-void GameLcdShowRecord(uint32_t bestRecord)
+void GameLcdShowRecordPage(uint32_t firstRank, uint32_t firstScore,
+                           uint32_t secondRank, uint32_t secondScore)
 {
-    Lcd1602Printf("Best Score:%lu",
-                  (unsigned long)ClampRecordValue(bestRecord));
+    Lcd1602Printf("%lu. %lu\n%lu. %lu",
+                  (unsigned long)firstRank,
+                  (unsigned long)ClampRecordValue(firstScore),
+                  (unsigned long)secondRank,
+                  (unsigned long)ClampRecordValue(secondScore));
 }

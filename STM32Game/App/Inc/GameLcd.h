@@ -19,8 +19,9 @@ void GameLcdShowMiss(uint8_t life, uint32_t scorePenalty);
 /* 게임 종료 직후 GameOver 메시지를 표시한다. */
 void GameLcdShowGameOver(void);
 
-/* 방금 끝난 게임의 점수와 미스 횟수를 표시한다. */
-void GameLcdShowResult(uint32_t score, uint32_t missCount);
+/* 방금 끝난 게임의 점수와 최고 연속 콤보를 표시한다. */
+void GameLcdShowResult(uint32_t score, uint32_t maxCombo);
 
-/* 최고 점수와 최근 게임의 미스 횟수를 표시한다. */
-void GameLcdShowRecord(uint32_t bestRecord);
+/* 한 페이지에 연속된 두 순위와 점수를 표시한다. */
+void GameLcdShowRecordPage(uint32_t firstRank, uint32_t firstScore,
+                           uint32_t secondRank, uint32_t secondScore);

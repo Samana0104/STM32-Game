@@ -23,6 +23,9 @@ uint32_t InGameStateGetScore(void);
 /* 현재 연속 성공 횟수를 반환한다. */
 uint32_t InGameStateGetCombo(void);
 
+/* 현재 게임에서 달성한 최고 연속 성공 횟수를 반환한다. */
+uint32_t InGameStateGetMaxCombo(void);
+
 /* 현재 게임에서 두더지를 놓친 횟수를 반환한다. */
 uint32_t InGameStateGetMissCount(void);
 

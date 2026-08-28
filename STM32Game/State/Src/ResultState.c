@@ -52,7 +52,7 @@ void ResultStateUpdate(void)
 
         isRecordVisible = true;
         GameLcdShowResult(InGameStateGetScore(),
-                          InGameStateGetMissCount());
+                          InGameStateGetMaxCombo());
         return;
     }
 

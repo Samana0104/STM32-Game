@@ -23,10 +23,21 @@ typedef enum
 static bool isActive;
 static TitleScreen currentScreen;
 static TitleMenuItem selectedMenuItem;
+static uint32_t recordFirstRank;
 
 static void PrintTitleMenu(void)
 {
     GameLcdShowTitleMenu(selectedMenuItem == TITLE_MENU_RECORD);
+}
+
+static void PrintRecordPage(void)
+{
+    uint32_t secondRank = recordFirstRank + 1U;
+
+    GameLcdShowRecordPage(recordFirstRank,
+                          GameRecordGetScore(recordFirstRank),
+                          secondRank,
+                          GameRecordGetScore(secondRank));
 }
 
 static void UpdateTitleMenu(void)
@@ -68,7 +79,8 @@ static void UpdateTitleMenu(void)
         else
         {
             currentScreen = TITLE_SCREEN_RECORD;
-            GameLcdShowRecord(GameRecordGetBestScore());
+            recordFirstRank = 1U;
+            PrintRecordPage();
             SoundPlayerPlayEffect(SOUND_ID_BUTTON);
         }
     }
@@ -76,8 +88,34 @@ static void UpdateTitleMenu(void)
 
 static void UpdateRecordScreen(void)
 {
-    if (WasJoystickMoved()
-        && GetJoystickDirection() == JOYSTICK_DOWN)
+    JoystickDirection direction;
+
+    if (!WasJoystickMoved())
+    {
+        return;
+    }
+
+    direction = GetJoystickDirection();
+
+    if (direction == JOYSTICK_DOWN)
+    {
+        if (recordFirstRank < (GAME_RECORD_MAX_COUNT - 1U))
+        {
+            recordFirstRank += 2U;
+            PrintRecordPage();
+            SoundPlayerPlayEffect(SOUND_ID_BUTTON);
+        }
+    }
+    else if (direction == JOYSTICK_UP)
+    {
+        if (recordFirstRank > 1U)
+        {
+            recordFirstRank -= 2U;
+            PrintRecordPage();
+            SoundPlayerPlayEffect(SOUND_ID_BUTTON);
+        }
+    }
+    else if (direction == JOYSTICK_LEFT)
     {
         currentScreen = TITLE_SCREEN_MENU;
         PrintTitleMenu();
@@ -90,6 +128,7 @@ void TitleStateEnter(void)
     isActive = true;
     currentScreen = TITLE_SCREEN_MENU;
     selectedMenuItem = TITLE_MENU_GAME_START;
+    recordFirstRank = 1U;
     SoundPlayerPlayBgm(SOUND_ID_TITLE_BGM);
     PrintTitleMenu();
     G_LOG(INFO, "TitleState entered. \r\n");
