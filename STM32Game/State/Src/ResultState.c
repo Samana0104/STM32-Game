@@ -23,6 +23,7 @@ void ResultStateEnter(void)
 
     GameRecordSave(InGameStateGetScore());
     GameLcdShowGameOver();
+    SoundPlayerPlayBgm(SOUND_ID_RESULT_BGM);
 
     if (InGameStateGetLife() == 0U)
     {
@@ -30,7 +31,7 @@ void ResultStateEnter(void)
     }
     else
     {
-        SoundPlayerPlayBgm(SOUND_ID_CANON);
+        SoundPlayerPlayEffect(SOUND_ID_SUCCESS);
     }
 
     G_LOG(INFO, "ResultState entered. \r\n");
@@ -56,14 +57,7 @@ void ResultStateUpdate(void)
         return;
     }
 
-    if (WasJoystickMoved()
-        && GetJoystickDirection() == JOYSTICK_UP)
-    {
-        ReadyStateSetStage(GAME_STAGE_1);
-        GameStateChange(GAME_STATE_READY);
-    }
-    else if (WasJoystickMoved()
-        && GetJoystickDirection() == JOYSTICK_DOWN)
+    if (WasJoystickMoved())
     {
         GameStateChange(GAME_STATE_TITLE);
     }
