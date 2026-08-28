@@ -60,6 +60,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     STM32Game/Driver/Inc
     STM32Game/App/Inc
     STM32Game/Utils/Inc
+    STM32Game/State/Inc
 )
 
 # Add project symbols (macros)
