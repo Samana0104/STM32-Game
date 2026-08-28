@@ -45,6 +45,7 @@ typedef enum
     SOUND_ID_BUTTON,
     SOUND_ID_TITLE_BGM,
     SOUND_ID_CANON,
+    SOUND_ID_IN_GAME_BGM,
     SOUND_ID_MAX_COUNT
 } SoundId;
 

@@ -170,6 +170,7 @@ void InGameStateEnter(void)
     GameLcdShowCombo(combo, life, GAME_COMBO_RANK_NONE, 0U);
 
     SpawnMoles(startTick);
+    SoundPlayerPlayBgm(SOUND_ID_IN_GAME_BGM);
     G_LOG(INFO, "InGameState entered.\r\n");
 }
 
@@ -259,6 +260,7 @@ void InGameStateExit(void)
     }
 
     TurnOffAllMoles();
+    SoundPlayerStopBgm();
     isActive = false;
     G_LOG(INFO, "InGameState exited.\r\n");
 }

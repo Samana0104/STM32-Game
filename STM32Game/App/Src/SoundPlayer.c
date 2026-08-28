@@ -20,6 +20,7 @@ static const SoundSequence *const soundSequences[] =
     &buttonSound,
     &titleBgm,
     &canonSound,
+    &inGameBgm,
 };
 
 static SoundPlayerState bgmState;
