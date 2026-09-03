@@ -1,7 +1,9 @@
 # STM32 Whack-a-Mole Game
 
 [🎬 프로젝트 시연 영상](https://youtu.be/5UklkCm0q4E?si=eT6humq3JWGSjwEj)
+
 [📄 프로젝트 발표자료 PDF](pdf/STM32Game%20프리젠테이션.pdf)
+
 **프로젝트 기간:** 8월 24일 ~ 8월 28일
 
 STM32F411RE 기반 보드에서 동작하는 7구 두더지 잡기 게임입니다. GPIO 버튼과 LED로 두더지를 표현하고, 조이스틱과 LCD1602으로 메뉴를 조작하며, FND·부저·내부 Flash를 이용해 점수와 사운드 및 영구 순위 기록을 제공합니다.
